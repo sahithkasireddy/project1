@@ -1,0 +1,164 @@
+---
+title: 'Project 1: Wrangling, Exploration, Visualization'
+author: "SDS322E"
+date: ''
+output:
+  html_document:
+    toc: yes
+    toc_float:
+      collapsed: no
+      smooth_scroll: yes
+  pdf_document:
+    toc: no
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE, fig.align = "center", warning = F, message = F,
+tidy=TRUE, tidy.opts=list(width.cutoff=60), R.options=list(max.print=100))
+```
+
+## Data Wrangling, Exploration, Visualization
+
+### Sahith Kasireddy
+
+#### Introduction 
+
+My two dataset are statistical data related to countries. One dataset, hif is about the different examples of freedom from political scientists. The other dataset, CountryDataSet, deals with the number of people leaving a country to a different country. I am interested in this dataset because I am really interested in cultures and the social and political systems of countries. I therefore wanted to see the relationship between the amount of people leaving a country and the country's freedom index.
+
+```{R}
+hfi <- read.csv(file = 'hfi.csv')
+UNImmigration <- read.csv(file ='CountryDataSet2.0.csv')
+
+```
+
+#### Tidying: Reshaping
+
+If your datasets are tidy already, demonstrate that you can reshape data with pivot wider/longer here (e.g., untidy and then retidy). Alternatively, it may be easier to wait until the wrangling section so you can reshape your summary statistics. Note here if you are going to do this.
+
+```{R}
+UNImmigration <- UNImmigration %>% pivot_longer(8:242, names_to="Country of Origin", values_to="Number of People Immigrating Out of Country")
+
+```
+
+    
+#### Joining/Merging
+
+```{R}
+
+UNImmigration %>% count()
+hfi %>% count()
+
+UNImmigration<- UNImmigration %>% rename("Country/Region of Destination" = Major.area..region..country.or.area.of.destination) %>% select(-c(1,3, 5:7)) 
+
+UNImmigration<- UNImmigration %>% filter(`Country/Region of Destination`!="UN development groups" & `Country/Region of Destination`!="World Bank income groups" & `Country/Region of Destination`!="Geographic regions" & `Country/Region of Destination`!="WORLD" & `Country/Region of Destination`!="More developed regions" & `Country/Region of Destination`!="Less developed regions" & `Country/Region of Destination`!="Least developed countries" & `Country/Region of Destination`!="Less developed regions, excluding least developed countries" & `Country/Region of Destination`!="High-income countries" & `Country/Region of Destination`!="Middle-income countries" & `Country/Region of Destination`!="Upper-middle-income countries" & `Country/Region of Destination`!="Lower-middle-income countries" & `Country/Region of Destination`!="Low-income countries" & `Country/Region of Destination`!="No income group available" & `Country/Region of Destination`!="Sustainable Development Goal (SDG) regions")
+
+
+UNImmigration<- UNImmigration %>% mutate(`Country of Origin`=str_replace_all(`Country of Origin`, "\\.", " ")) 
+
+UNImmigration$`Country of Origin` <- str_replace_all(UNImmigration$`Country of Origin`, c("Bolivia  Plurinational State of" ="Bolivia", "Central African Republic" ="Central Afr. Rep.", 
+ "Cabo Verde" ="Cape Verde", "Congo" ="Congo, Rep. Of", "Democratic Republic of the Congo" ="Congo, Dem. R.", "China  Hong Kong SAR" ="Hong Kong", "Czechia" ="Czech Rep.", "Dominican Republic" ="Dominican Rep.", 
+ "Gambia"= "Gambia, The", "Guinea Bissau"="Guinea-Bissau", "Iran  Islamic Republic of" ="Iran", "Lao People s Democratic Republic" ="Laos", "Republic of Korea" ="Korea, South", 
+ "Kyrgyzstan" ="Kyrgyz Republic", "Papua New Guinea" ="Pap. New Guinea", "Republic of Moldova" ="Moldova", "Russian Federation" ="Russia", "Slovakia"="Slovak Rep.", "Syrian Arab Republic" ="Syria", 
+ "Timor Leste" ="Timor-Leste", "United Republic of Tanzania" ="Tanzania", "United States of America" ="United States", "Venezuela  Bolivarian Republic of" ="Venezuela", 
+ "Viet Nam" ="Vietnam", "Yemen" ="Yemen, Rep.", "Eswatini" ="Swaziland"))
+
+UNImmigration$`Country of Origin` <-str_replace_all(UNImmigration$`Country of Origin`, "Congo, Dem. R., Rep. Of", "Congo, Dem. R.")
+
+UNImmigration <- UNImmigration %>% filter(`Country/Region of Destination`!="Africa" & `Country/Region of Destination`!="Asia" & `Country/Region of Destination`!="Caribbean" & 
+`Country/Region of Destination`!="Central America"& `Country/Region of Destination`!="Central Asia" & `Country/Region of Destination`!="Eastern Africa" & `Country/Region of Destination`!="Western Europe" & 
+`Country/Region of Destination`!="Africa" & `Country/Region of Destination`!="Asia" & `Country/Region of Destination`!="Central America"& `Country/Region of Destination`!="Central Asia" & 
+`Country/Region of Destination`!="Eastern Africa" & `Country/Region of Destination`!="Western Europe" & `Country/Region of Destination`!="CENTRAL AND SOUTHERN ASIA" & 
+`Country/Region of Destination`!="EASTERN AND SOUTH-EASTERN ASIA" & `Country/Region of Destination`!="Eastern Asia"& `Country/Region of Destination`!="Eastern Europe" & 
+`Country/Region of Destination`!="Europe" & `Country/Region of Destination`!="EUROPE" & `Country/Region of Destination`!="Australia / New Zealand" & `Country/Region of Destination`!="EUROPE AND NORTHERN AMERICA" & 
+`Country/Region of Destination`!="Latin America and the Caribbean" & `Country/Region of Destination`!="LATIN AMERICA AND THE CARIBBEAN" & `Country/Region of Destination`!="Asia" & 
+`Country/Region of Destination`!="Middle Africa" & `Country/Region of Destination`!="Northern Africa" & `Country/Region of Destination`!="NORTHERN AFRICA AND WESTERN ASIA" & 
+`Country/Region of Destination`!="Northern America" & `Country/Region of Destination`!="NORTHERN AMERICA" & `Country/Region of Destination`!="Northern Europe" & `Country/Region of Destination`!="OCEANIA" & 
+`Country/Region of Destination`!="Oceania" & `Country/Region of Destination`!="South America" & `Country/Region of Destination`!="South-Eastern Asia" & `Country/Region of Destination`!="Southern Africa" & 
+`Country/Region of Destination`!="Southern Asia" & `Country/Region of Destination`!="Southern Europe" & `Country/Region of Destination`!="SUB-SAHARAN AFRICA" & `Country/Region of Destination`!="Western Africa" & 
+`Country/Region of Destination`!="Western Asia")
+
+UNImmigration <- UNImmigration %>% filter(`Country of Origin`!="Total" & `Country of Origin`!="Other North" & `Country of Origin`!="Other South")
+
+hfi <- hfi %>% rename("Country of Origin" = `countries`, "Year" = year)
+UNImmigration %>% count()
+hfi %>% count()
+
+joinedDataSet <- inner_join(UNImmigration, hfi, by=c("Country of Origin","Year"))
+
+#joinedDataSet <- full_join(UNImmigration, hfi, by=c("Country of Origin","Year"))
+
+
+
+joinedDataSet %>% group_by(`Country of Origin`) %>% summarise(pf_religion) %>% distinct() %>% group_by(`Country of Origin`) %>% summarise(mean(pf_religion))
+joinedDataSet %>% group_by(`Country of Origin`) %>% summarise(mean(pf_religion))
+joinedDataSet %>% group_by(`Country of Origin`) %>% summarise(mean(pf_identity_sex))
+joinedDataSet %>% group_by(`Country of Origin`) %>% summarise(mean(pf_rol_procedural))
+joinedDataSet %>% group_by(`Country of Origin`) %>% summarise(mean(pf_ss_procedural))
+
+joinedDataSet %>% mutate(averageHumanIndex = mean(pf_religion + pf_identity_sex + pf_rol_procedural + pf_ss_disappearances_disap + pf_movement_women +  pf_association_association + 
+ pf_association_assembly + pf_expression + pf_identity_divorce + ef_regulation_labor + ef_regulation))
+
+```
+
+After tidying (pivot_longer) the UnImmigration data, the calculated number of observations in this dataset appears to be 73320. After doing the appropriate data cleaning with dpylr (in order to get rid of extraneous variables and make sure that the country names that were matched between the two datasets were spelled the same), the number of calculated observations in the UnImmigration and hfi datasets appear to be 381640 and 1458 respectively,   An inner join was performed in order to see match the data values from the UNImmigration dataset to the hfi dataset. Right before joining the datasets, there are two unique ID variables in the UNImmigration dataset: "Country/Region of Destination" and "Number of People Immigrating Out of Country". The unique ID variables in the hfi dataset are numerous. 
+
+####  Wrangling
+
+```{R}
+joinedDataSet<- joinedDataSet %>% mutate_all(na_if,"")
+joinedDataSet<- joinedDataSet %>% mutate_all(na_if,"..")
+joinedDataSet<- joinedDataSet %>% select(-c(5:6))
+
+joinedDataSet <- joinedDataSet %>% select(c(1:5), pf_religion, pf_identity_sex, pf_rol_procedural, pf_ss_disappearances_disap, pf_movement_women, pf_association_association, pf_association_assembly, pf_expression, pf_identity_divorce, ef_regulation_labor, ef_regulation)
+
+
+
+
+
+joinedDataSet<- joinedDataSet%>%filter(!if_all(c(4, 6:16), is.na))
+
+
+
+joinedDataSet
+
+```
+
+The first step I made sure to do is to turn any blank observations or any observations with .. into NA values. 
+
+
+
+#### Visualizing
+
+```{R}
+library(ggplot2)
+
+
+ggplot(joinedDataSet, aes(`Number of People Immigrating Out of Country`, pf_religion))+ geom_point(size=0.2, aes(color= `region`))
+
+
+                                                                                                  
+`Country of Origin`
+
+```
+
+Your discussion of plot 1
+
+```{R}
+# your plot 2
+```
+
+Your discussion of plot 2
+
+```{R}
+# your plot 3
+```
+
+Your discussion of plot 3
+
+#### Concluding Remarks
+
+If any!
+
+
+
+
