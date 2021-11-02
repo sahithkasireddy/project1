@@ -26,6 +26,8 @@ tidy=TRUE, tidy.opts=list(width.cutoff=60), R.options=list(max.print=100))
 My two dataset are statistical data related to countries. One dataset, hif is about the different examples of freedom from political scientists. The other dataset, CountryDataSet, deals with the number of people leaving a country to a different country. I am interested in this dataset because I am really interested in cultures and the social and political systems of countries. I therefore wanted to see the relationship between the amount of people leaving a country and the country's freedom index.
 
 ```{R}
+library(dplyr)
+library(tidyverse)
 hfi <- read.csv(file = 'hfi.csv')
 UNImmigration <- read.csv(file ='CountryDataSet2.0.csv')
 
@@ -87,17 +89,6 @@ joinedDataSet <- inner_join(UNImmigration, hfi, by=c("Country of Origin","Year")
 
 #joinedDataSet <- full_join(UNImmigration, hfi, by=c("Country of Origin","Year"))
 
-
-
-joinedDataSet %>% group_by(`Country of Origin`) %>% summarise(pf_religion) %>% distinct() %>% group_by(`Country of Origin`) %>% summarise(mean(pf_religion))
-joinedDataSet %>% group_by(`Country of Origin`) %>% summarise(mean(pf_religion))
-joinedDataSet %>% group_by(`Country of Origin`) %>% summarise(mean(pf_identity_sex))
-joinedDataSet %>% group_by(`Country of Origin`) %>% summarise(mean(pf_rol_procedural))
-joinedDataSet %>% group_by(`Country of Origin`) %>% summarise(mean(pf_ss_procedural))
-
-joinedDataSet %>% mutate(averageHumanIndex = mean(pf_religion + pf_identity_sex + pf_rol_procedural + pf_ss_disappearances_disap + pf_movement_women +  pf_association_association + 
- pf_association_assembly + pf_expression + pf_identity_divorce + ef_regulation_labor + ef_regulation))
-
 ```
 
 After tidying (pivot_longer) the UnImmigration data, the calculated number of observations in this dataset appears to be 73320. After doing the appropriate data cleaning with dpylr (in order to get rid of extraneous variables and make sure that the country names that were matched between the two datasets were spelled the same), the number of calculated observations in the UnImmigration and hfi datasets appear to be 381640 and 1458 respectively,   An inner join was performed in order to see match the data values from the UNImmigration dataset to the hfi dataset. Right before joining the datasets, there are two unique ID variables in the UNImmigration dataset: "Country/Region of Destination" and "Number of People Immigrating Out of Country". The unique ID variables in the hfi dataset are numerous. 
@@ -105,25 +96,77 @@ After tidying (pivot_longer) the UnImmigration data, the calculated number of ob
 ####  Wrangling
 
 ```{R}
+#Cleaning data further and selecting only interested variables
 joinedDataSet<- joinedDataSet %>% mutate_all(na_if,"")
 joinedDataSet<- joinedDataSet %>% mutate_all(na_if,"..")
 joinedDataSet<- joinedDataSet %>% select(-c(5:6))
 
 joinedDataSet <- joinedDataSet %>% select(c(1:5), pf_religion, pf_identity_sex, pf_rol_procedural, pf_ss_disappearances_disap, pf_movement_women, pf_association_association, pf_association_assembly, pf_expression, pf_identity_divorce, ef_regulation_labor, ef_regulation)
 
+#The dataset is filtered out in terms of the specified columns. This code counts for the number of NAs in each column
+joinedDataSet %>% filter(is.na(Year)) %>% count()
+joinedDataSet %>% filter(is.na(`Country/Region of Destination`)) %>% count()
+joinedDataSet %>% filter(is.na(`Country of Origin`)) %>% count()
+joinedDataSet %>% filter(is.na(`Number of People Immigrating Out of Country`)) %>% count()
+joinedDataSet %>% filter(is.na(region)) %>% count()
+joinedDataSet %>% filter(is.na(pf_religion)) %>% count()
+joinedDataSet %>% filter(is.na(pf_identity_sex)) %>% count()
+joinedDataSet %>% filter(is.na(pf_rol_procedural)) %>% count()
+joinedDataSet %>% filter(is.na(pf_ss_disappearances_disap)) %>% count()
+joinedDataSet %>% filter(is.na(pf_movement_women)) %>% count()
+joinedDataSet %>% filter(is.na(pf_association_association)) %>% count()
+joinedDataSet %>% filter(is.na(pf_association_assembly)) %>% count()
+joinedDataSet %>% filter(is.na(pf_expression)) %>% count()
+joinedDataSet %>% filter(is.na(pf_identity_divorce)) %>% count()
+joinedDataSet %>% filter(is.na(ef_regulation_labor)) %>% count()
+joinedDataSet %>% filter(is.na(ef_regulation)) %>% count()
 
-
-
-
+#Filtered out rows that did not have any numbers (only NA. This is because they were not going to be of use for the rest of the project. I also changed the class of the Immigration Variable to integer
 joinedDataSet<- joinedDataSet%>%filter(!if_all(c(4, 6:16), is.na))
 
+joinedDataSet$`Number of People Immigrating Out of Country` <- as.integer(joinedDataSet$`Number of People Immigrating Out of Country`)
+
+#New variable created
+joinedDataSet<- joinedDataSet %>% arrange(`Country of Origin`, `Country/Region of Destination`) %>% mutate(ChangeInImmigration = (`Number of People Immigrating Out of Country`-lag(`Number of People Immigrating Out of Country`)) /lag(`Number of People Immigrating Out of Country`))
+
+joinedDataSet %>% filter(is.na(ChangeInImmigration)) %>% count()
+
+#Freqeuncy of Each Categorical Variable
+joinedDataSet %>% group_by(`Country/Region of Destination`) %>% count()
+joinedDataSet %>% group_by(`Country of Origin`) %>% count()
+
+#Summary Statistic Accounting for Two Categorical Variables
+
+#joinedDataSet %>% group_by(`Country of Origin`, `Country/Region of Destination`) %>% summarise_at(c(2:4), mean, na.rm = TRUE)
+
+#SSTwoCat<- joinedDataSet %>% group_by(`Country of Origin`, `Country/Region of Destination`) %>% summarise_at(c(2:4), .funs = list(mean=mean, sd=sd, median=median, min=min, max=max), na.rm = TRUE) %>% filter(`Number of People Immigrating Out of Country`!=)
 
 
-joinedDataSet
+
+#Summary Statistic Accounting for Country of Origin as a Categorical Variable
+joinedDataSet %>% group_by(`Country of Origin`) %>% summarise_at(c(3, 5:16), mean, na.rm = TRUE) 
+
+SSOneCat<- joinedDataSet %>% group_by(`Country of Origin`) %>% summarise_at(c(3, 5:16), .funs = list(mean=mean, sd=sd, median=median, min=min, max=max), na.rm = TRUE) %>% pivot_longer(-1) 
+
+SSOneCat<- SSOneCat %>% mutate(`name`=str_replace_all(`name`, "pf_re", "pf re")) %>% mutate(`name`=str_replace_all(`name`, "pf_identity_s", "pf identity s")) %>% mutate(`name`=str_replace_all(`name`, "pf_rol_pro", "pf rol pro")) %>% mutate(`name`=str_replace_all(`name`, "pf_ss_disappearances_d", "pf ss disappearances d")) %>% mutate(`name`=str_replace_all(`name`, "pf_movement_w", "pf movement w")) %>% mutate(`name`=str_replace_all(`name`, "pf_association_ass", "pf association ass"))  %>% mutate(`name`=str_replace_all(`name`, "pf_ex", "pf ex")) %>% mutate(`name`=str_replace_all(`name`, "pf_identity_divorce", "pf identity divorce")) %>% mutate(`name`=str_replace_all(`name`, "ef_regulation_lab", "ef regulation lab")) %>% mutate(`name`=str_replace_all(`name`, "ef_regulation", "ef regulation"))
+SSOneCat <- SSOneCat %>% separate(name, into=c("name","stat"), sep="_") %>% pivot_wider()
+
+#SummaryStatistic Not Accounting for Any Categorical Variable
+
+SSNumerical<- joinedDataSet %>% summarise_at(c(4, 6:17), .funs = list(mean=mean, sd=sd, median=median, min=min, max=max), na.rm = TRUE) %>% pivot_longer(c(1:65))
+
+SSNumerical<- SSNumerical %>% mutate(`name`=str_replace_all(`name`, "pf_re", "pf re")) %>% mutate(`name`=str_replace_all(`name`, "pf_identity_s", "pf identity s")) %>% mutate(`name`=str_replace_all(`name`, "pf_rol_pro", "pf rol pro")) %>% mutate(`name`=str_replace_all(`name`, "pf_ss_disappearances_d", "pf ss disappearances d")) %>% mutate(`name`=str_replace_all(`name`, "pf_movement_w", "pf movement w")) %>% mutate(`name`=str_replace_all(`name`, "pf_association_ass", "pf association ass"))  %>% mutate(`name`=str_replace_all(`name`, "pf_ex", "pf ex")) %>% mutate(`name`=str_replace_all(`name`, "pf_identity_divorce", "pf identity divorce")) %>% mutate(`name`=str_replace_all(`name`, "ef_regulation_lab", "ef regulation lab")) %>% mutate(`name`=str_replace_all(`name`, "ef_regulation", "ef regulation"))
+
+SSNumerical <- SSNumerical %>% separate(name, into=c("name","stat"), sep="_") %>% pivot_wider()
+
+#SummaryStatistics<- SummaryStatistics %>% kable(digits = 3, align = 'c', col.names=str_to_title(names(.)))
+#SummaryStatistics %>% gt %>% tab_header(title=md("**Summary Statistics**"))
+
+
 
 ```
 
-The first step I made sure to do is to turn any blank observations or any observations with .. into NA values. 
+The first step I made sure to do is to turn any blank observations or any observations with .. into NA values. I also turned the Number of People Immigrating column into integer values. 
 
 
 
@@ -132,25 +175,51 @@ The first step I made sure to do is to turn any blank observations or any observ
 ```{R}
 library(ggplot2)
 
+joinedDataSetpfreligonandNumberofPeople <- joinedDataSet %>% filter(Year==2015) %>% filter(`Number of People Immigrating Out of Country`!=0)
 
-ggplot(joinedDataSet, aes(`Number of People Immigrating Out of Country`, pf_religion))+ geom_point(size=0.2, aes(color= `region`))
+ggplot(joinedDataSetpfreligonandNumberofPeople, aes(`Number of People Immigrating Out of Country`, pf_religion))+ geom_point(size=0.2, aes(color= `region`)) +ggtitle("Relationship between Religious Freedom and Number of People Leaving a Country")+xlab("Number of People Leaving Country")+ylab("Religion Index Score")
 
-
+ggplot(ChickWeight, aes(Time, weight)) + 
+  geom_line(aes(group = Chick, color = Chick)) +
+  geom_point(color = "white") +
+  ggtitle("Chick Weights Over 2-Day Intervals")+xlab("Days")+ylab("Chick Weight (g)") +
+  theme(legend.position = "none") + 
+  facet_grid(rows = vars(Diet))
                                                                                                   
-`Country of Origin`
-
 ```
 
 Your discussion of plot 1
 
 ```{R}
-# your plot 2
+
+joinedDataSet %>% group_by(`Country of Origin`) %>% filter(!is.na(`Number of People Immigrating Out of Country`)) %>% summarise("Total Number of People Immigrating Out of Country" = sum(`Number of People Immigrating Out of Country`))  %>% arrange(`Total Number of People Immigrating Out of Country`)
+
+joinedDataSet %>% group_by(`Country of Origin`) %>% filter(!is.na(`Number of People Immigrating Out of Country`)) %>% summarise("Total Number of People Immigrating Out of Country" = sum(`Number of People Immigrating Out of Country`)) %>% arrange(desc(`Total Number of People Immigrating Out of Country`))
+
+Top5Low5ByNumberOfPeopleLeaving <- joinedDataSet %>% filter(!is.na(`Number of People Immigrating Out of Country`)) %>% filter(`Country of Origin`=="United States"|`Country of Origin`=="United Kingdom"|`Country of Origin`=="Russia"|`Country of Origin`=="India"|`Country of Origin`=="France"|`Country of Origin`=="Bhutan"|`Country of Origin`=="Swaziland"|`Country of Origin`=="Timor-Leste"|`Country of Origin`=="Brunei Darussalam"|`Country of Origin`=="Pap. New Guinea")
+                                                       
+ggplot(Top5Low5ByNumberOfPeopleLeaving, aes(x = `Number of People Immigrating Out of Country`, fill=`Country of Origin`))+ geom_bar(position='fill')
+
+ggplot(Top5Low5ByNumberOfPeopleLeaving, aes(Year, `Number of People Immigrating Out of Country`, color = `Country of Origin`)) + geom_point() + 
+    geom_step(stat = "summary", fun.y = mean) + geom_point(stat = "summary", 
+    fun.y = mean, geom = "point", shape = "cross", size = 4, 
+    color = "black")
+
+ggplot(Top5Low5ByNumberOfPeopleLeaving, aes(`Number of People Immigrating Out of Country`, pf_religion))+ geom_point(size=0.2, aes(color= `Country of Origin`)) + ggtitle("Relationship between Religious Freedom and Number of People Leaving a Country")+xlab("Number of People Leaving Country")+ylab("Religion Index Score") + facet_grid(rows = vars(Year))
+
+
+
+ggplot(joinedDataSet, aes(x = `Number of People Immigrating Out of Country`, fill=region))+ geom_bar(position='fill')
+
+
+
+
 ```
 
 Your discussion of plot 2
 
 ```{R}
-# your plot 3
+
 ```
 
 Your discussion of plot 3
