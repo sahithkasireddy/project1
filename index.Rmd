@@ -39,38 +39,26 @@ UNImmigration <- read.csv(file ='CountryDataSet2.0.csv')
 
 
 ```{R}
-UNImmigration <- UNImmigration %>% pivot_longer(8:242, names_to="Country of Origin", values_to="Number of People Immigrating Out of Country")
+#Renaming variable, removing uneeded columns, and snapshot of sample
+UNImmigration<- UNImmigration %>% rename("Country/Region of Destination" = Major.area..region..country.or.area.of.destination) %>% select(-c(1,3, 5:10)) 
+UNImmigration %>% select(3:13) %>% slice(100:110)
+
+#Filtering out uneeded observations and snapshot of sample after tidying
+UNImmigration <- UNImmigration %>% pivot_longer(3:234, names_to="Country of Origin", values_to="Number of People Immigrating Out of Country")
+UNImmigration <- UNImmigration %>% filter(`Country of Origin`!="Total" & `Country of Origin`!="Other North" & `Country of Origin`!="Other South")
+UNImmigration %>% slice(2000, 75000, 100000, 254000, 400000)
 
 ```
+One of the variables was renamed to 'Country/Region of Destination', which are the regions or countries that migrants are immigrating to. Extraneous columns were removed from the 'UNImmigration' dataset because they either do not have numerical value or will not be used later. The first headshot shows some observations of the data before tidying. Each individual country is its own variable as seen at the top of the headshot, which shows a sample of some of the countries. 
+
+After tidying (pivot_longer) the dataset, columns 3 through 234 were selected from the 'UNImmigration dataset.' These countries became essentially combined into a column titled "Country of Origin" which are the countries in the dataset that migrants are migrating from. The numerical values under the untidied dataset were put under a column titled "Number of People Immigrating Out Country." Some observations were filtered out because they are total values and will not be used further. A headhsot of randomly picked observations from the tidied 'UNImmigration dataset' were picked.
 
     
 #### Joining/Merging
 
 ```{R}
-
-UNImmigration %>% count()
-hfi %>% count()
-
-UNImmigration<- UNImmigration %>% rename("Country/Region of Destination" = Major.area..region..country.or.area.of.destination) %>% select(-c(1,3, 5:7)) 
-
+#Filtering out many extraneous regions, such as categories of development and continents. Only actual countries wanted actual countries. 
 UNImmigration<- UNImmigration %>% filter(`Country/Region of Destination`!="UN development groups" & `Country/Region of Destination`!="World Bank income groups" & `Country/Region of Destination`!="Geographic regions" & `Country/Region of Destination`!="WORLD" & `Country/Region of Destination`!="More developed regions" & `Country/Region of Destination`!="Less developed regions" & `Country/Region of Destination`!="Least developed countries" & `Country/Region of Destination`!="Less developed regions, excluding least developed countries" & `Country/Region of Destination`!="High-income countries" & `Country/Region of Destination`!="Middle-income countries" & `Country/Region of Destination`!="Upper-middle-income countries" & `Country/Region of Destination`!="Lower-middle-income countries" & `Country/Region of Destination`!="Low-income countries" & `Country/Region of Destination`!="No income group available" & `Country/Region of Destination`!="Sustainable Development Goal (SDG) regions")
-
-
-UNImmigration<- UNImmigration %>% mutate(`Country of Origin`=str_replace_all(`Country of Origin`, "\\.", " ")) 
-
-UNImmigration$`Country of Origin` <- str_replace_all(UNImmigration$`Country of Origin`, c("Bolivia  Plurinational State of" ="Bolivia", "Central African Republic" ="Central Afr. Rep.", "Cabo Verde" ="Cape Verde", "Congo" ="Congo, Rep. Of", "Democratic Republic of the Congo" ="Congo, Dem. R.", "China Hong Kong SAR" ="Hong Kong", "Czechia" ="Czech Rep.", "Dominican Republic" ="Dominican Rep.", "Gambia"= "Gambia, The", "Guinea Bissau"="Guinea-Bissau", "Iran  Islamic Republic of" ="Iran", "Lao People s Democratic Republic" ="Laos", "Republic of Korea" ="Korea, South", "Kyrgyzstan" ="Kyrgyz Republic", "Papua New Guinea" ="Pap. New Guinea", "Republic of Moldova" ="Moldova", "Russian Federation" ="Russia", "Slovakia"="Slovak Rep.", "Syrian Arab Republic" ="Syria", "Timor Leste" ="Timor-Leste", "United Republic of Tanzania" ="Tanzania", "United States of America" ="United States", "Venezuela  Bolivarian Republic of" ="Venezuela", "Viet Nam" ="Vietnam", "Yemen" ="Yemen, Rep.", "Eswatini" ="Swaziland"))
-
-
-UNImmigration$`Country of Origin` <-str_replace_all(UNImmigration$`Country of Origin`, c("Bolivia "="Bolivia","China  Hong Kong SAR"="Hong Kong", "Iran "="Iran", "Venezuela "= "Venezuela", "Congo, Dem. R., Rep. Of" ="Congo, Dem. R."))
-
-UNImmigration<- UNImmigration %>% mutate(`Country/Region of Destination`=str_replace_all(`Country/Region of Destination`, "\\.", " ")) 
-
-UNImmigration$`Country/Region of Destination` <- str_replace_all(UNImmigration$`Country/Region of Destination`, c("Bolivia  Plurinational State of" ="Bolivia", "Central African Republic" ="Central Afr. Rep.", "Cabo Verde" ="Cape Verde", "Congo" ="Congo, Rep. Of", "Democratic Republic of the Congo" ="Congo, Dem. R.", "China, Hong Kong SAR" ="Hong Kong", "Czechia" ="Czech Rep.", "Dominican Republic" ="Dominican Rep.", "Gambia"= "Gambia, The", "Guinea Bissau"="Guinea-Bissau", "Iran  Islamic Republic of" ="Iran", "Lao People s Democratic Republic" ="Laos", "Republic of Korea" ="Korea, South", "Kyrgyzstan" ="Kyrgyz Republic", "Papua New Guinea" ="Pap. New Guinea", "Republic of Moldova" ="Moldova", "Russian Federation" ="Russia", "Slovakia"="Slovak Rep.", "Syrian Arab Republic" ="Syria", "Timor Leste" ="Timor-Leste", "United Republic of Tanzania" ="Tanzania", "United States of America" ="United States", "Venezuela(Bolivarian Republic of)" ="Venezuela", "Viet Nam" ="Vietnam", "Yemen" ="Yemen, Rep.", "Eswatini" ="Swaziland"))
-
-UNImmigration$`Country/Region of Destination` <-str_replace_all(UNImmigration$`Country/Region of Destination`, c("Bolivia "="Bolivia","China  Hong Kong SAR"="Hong Kong", "Iran "="Iran", "Congo, Dem. R., Rep. Of" ="Congo, Dem. R."))
-
-UNImmigration %>% filter(`Country/Region of Destination`=="Venezuela ")
-
 
 UNImmigration <- UNImmigration %>% filter(`Country/Region of Destination`!="Africa" & `Country/Region of Destination`!="Asia" & `Country/Region of Destination`!="Caribbean" & 
 `Country/Region of Destination`!="Central America"& `Country/Region of Destination`!="Central Asia" & `Country/Region of Destination`!="Eastern Africa" & `Country/Region of Destination`!="Western Europe" & 
@@ -85,24 +73,53 @@ UNImmigration <- UNImmigration %>% filter(`Country/Region of Destination`!="Afri
 `Country/Region of Destination`!="Southern Asia" & `Country/Region of Destination`!="Southern Europe" & `Country/Region of Destination`!="SUB-SAHARAN AFRICA" & `Country/Region of Destination`!="Western Africa" & 
 `Country/Region of Destination`!="Western Asia")
 
-UNImmigration <- UNImmigration %>% filter(`Country of Origin`!="Total" & `Country of Origin`!="Other North" & `Country of Origin`!="Other South")
+#Regex to rename countries from UNImmigration dataset
+UNImmigration<- UNImmigration %>% mutate(`Country of Origin`=str_replace_all(`Country of Origin`, "\\.", " ")) 
 
+UNImmigration$`Country of Origin` <- str_replace_all(UNImmigration$`Country of Origin`, c("Bolivia  Plurinational State of" ="Bolivia", "Central African Republic" ="Central Afr. Rep.", "Cabo Verde" ="Cape Verde", "Congo" ="Congo, Rep. Of", "Democratic Republic of the Congo" ="Congo, Dem. R.", "China Hong Kong SAR" ="Hong Kong", "Czechia" ="Czech Rep.", "Dominican Republic" ="Dominican Rep.", "Gambia"= "Gambia, The", "Guinea Bissau"="Guinea-Bissau", "Iran  Islamic Republic of" ="Iran", "Lao People s Democratic Republic" ="Laos", "Republic of Korea" ="Korea, South", "Kyrgyzstan" ="Kyrgyz Republic", "Papua New Guinea" ="Pap. New Guinea", "Republic of Moldova" ="Moldova", "Russian Federation" ="Russia", "Slovakia"="Slovak Rep.", "Syrian Arab Republic" ="Syria", "Timor Leste" ="Timor-Leste", "United Republic of Tanzania" ="Tanzania", "United States of America" ="United States", "Venezuela  Bolivarian Republic of" ="Venezuela", "Viet Nam" ="Vietnam", "Yemen" ="Yemen, Rep.", "Eswatini" ="Swaziland"))
+
+
+UNImmigration$`Country of Origin` <-str_replace_all(UNImmigration$`Country of Origin`, c("Bolivia "="Bolivia","China  Hong Kong SAR"="Hong Kong", "Iran "="Iran", "Venezuela "= "Venezuela", "Congo, Dem. R., Rep. Of" ="Congo, Dem. R."))
+
+UNImmigration<- UNImmigration %>% mutate(`Country/Region of Destination`=str_replace_all(`Country/Region of Destination`, "\\.", " ")) 
+
+UNImmigration$`Country/Region of Destination` <- str_replace_all(UNImmigration$`Country/Region of Destination`, c("Bolivia  Plurinational State of" ="Bolivia", "Central African Republic" ="Central Afr. Rep.", "Cabo Verde" ="Cape Verde", "Congo" ="Congo, Rep. Of", "Democratic Republic of the Congo" ="Congo, Dem. R.", "China, Hong Kong SAR" ="Hong Kong", "Czechia" ="Czech Rep.", "Dominican Republic" ="Dominican Rep.", "Gambia"= "Gambia, The", "Guinea Bissau"="Guinea-Bissau", "Iran  Islamic Republic of" ="Iran", "Lao People s Democratic Republic" ="Laos", "Republic of Korea" ="Korea, South", "Kyrgyzstan" ="Kyrgyz Republic", "Papua New Guinea" ="Pap. New Guinea", "Republic of Moldova" ="Moldova", "Russian Federation" ="Russia", "Slovakia"="Slovak Rep.", "Syrian Arab Republic" ="Syria", "Timor Leste" ="Timor-Leste", "United Republic of Tanzania" ="Tanzania", "United States of America" ="United States", "Venezuela(Bolivarian Republic of)" ="Venezuela", "Viet Nam" ="Vietnam", "Yemen" ="Yemen, Rep.", "Eswatini" ="Swaziland"))
+
+UNImmigration$`Country/Region of Destination` <-str_replace_all(UNImmigration$`Country/Region of Destination`, c("Bolivia "="Bolivia","China  Hong Kong SAR"="Hong Kong", "Iran "="Iran", "Congo, Dem. R., Rep. Of" ="Congo, Dem. R."))
+
+#Cleaning up hfi
 hfi <- hfi %>% rename("Country of Origin" = `countries`, "Year" = year) %>% select(-c(1,3))
+
+#Calculating number of observations for both datasets right before joining
 UNImmigration %>% count()
 hfi %>% count()
 
+#Inner join and its analysis conducted
 joinedDataSet <- inner_join(UNImmigration, hfi, by=c("Country of Origin","Year"))
 
 joinedDataSet %>% count()
 
-```
+#Calculating the number of observations that were dropped after joining
+381640 - 72380
 
-After tidying (pivot_longer) the UnImmigration data, the calculated number of observations in this dataset appears to be 73320. After doing the appropriate data cleaning with dpylr (in order to get rid of extraneous variables and make sure that the common countries between the two datasets were spelled the same), the number of calculated observations in the UnImmigration and hfi datasets appear to be 381640 and 1458 respectively. An inner join was performed in order to match the data values from the UNImmigration dataset to the hfi dataset. Right before joining the datasets, there are two unique ID variables in the UNImmigration dataset: "Country/Region of Destination" and "Number of People Immigrating Out of Country". The unique ID variables in the hfi dataset are numerous. There are 120 unique variables of 122 variables (only 'Year' and 'Country of Origin' are not unique). Some of the unique ID variables in the 'hif' that I will be using are 'pf_religion, pf_identity_sex, pf_rol_procedural, pf_ss_disappearances_disap, pf_movement_women, pf_association_association, pf_association_assembly, pf_expression, pf_identity_divorce,ef_regulation, and hf_score'
+#install.packages("arsenal")
+library(arsenal)
+
+
+comparedf(x = hfi %>% slice(-(1:1458)) %>% select(c(1:3), pf_religion, pf_identity_sex, pf_rol_procedural, pf_ss_disappearances_disap, pf_movement_women, pf_association_association, pf_association_assembly, pf_expression, pf_identity_divorce,ef_regulation, hf_score), y = UNImmigration %>% slice(-(1:381640)))
+
+
+summary(comparedf(hfi %>% slice(-(1:1458)) %>% select(c(1:3), pf_religion, pf_identity_sex, pf_rol_procedural, pf_ss_disappearances_disap, pf_movement_women, pf_association_association, pf_association_assembly, pf_expression, pf_identity_divorce,ef_regulation, hf_score), UNImmigration %>% slice(-(1:381640))))
+
+```
+After filtering out unneeded regions from both the 'Country/Region of Destination' varible and the 'Country of Origin' variable in the UNImmigration dataset, Regex (regular expressions) were used to make sure that the common countries between the two datasets were spelled the same. The two unique ID variables in the UNImmigration dataset: 'Country of Destination' and "Number of People Immigrating Out of Country". The unique ID variables in the hfi dataset are numerous. There are 120 unique variables of 122 variables (only 'Year' and 'Country of Origin' are not unique). Some of the unique ID variables in the 'hif' that I will be using are 'pf_religion, pf_identity_sex, pf_rol_procedural, pf_ss_disappearances_disap, pf_movement_women, pf_association_association, pf_association_assembly, pf_expression, pf_identity_divorce,ef_regulation, and hf_score' (All of this is shown in the summary of the compare data frame code of the datasets, that were very filtered, for simplicity sake).
+
+An inner join was performed in order to match the data values from the UNImmigration dataset to the hfi dataset. An inner join was performed instead of other types of joins in order to keep data that only matched, , which meant that 309260 observations were dropped, considering that there were 72380 observations in the joinedDataSet. This will not create an issue for my analyssi because I only wanted data that was matched between both sets to make analysis consistent. Additionally, because I will be using variables from both datasets in my graphs, I did not want there to be data accounted for in that graph that did not come from both sets.
 
 ####  Wrangling
 
 ```{R}
-#Cleaning data further and selecting only interested variables
+#Making blank or observatiosn with .. into NA, selecting only interested variables, and filtering out rows with just NA for all numerical data. 
 joinedDataSet<- joinedDataSet %>% mutate_all(na_if,"")
 joinedDataSet<- joinedDataSet %>% mutate_all(na_if,"..")
 
@@ -115,28 +132,22 @@ joinedDataSet$`Number of People Immigrating Out of Country` <- as.integer(joined
 
 joinedDataSet<- joinedDataSet %>% arrange(`Country of Origin`, `Country/Region of Destination`, Year) %>% mutate(ChangeInImmigration = (`Number of People Immigrating Out of Country`-lag(`Number of People Immigrating Out of Country`)) /lag(`Number of People Immigrating Out of Country`))
 
-#The dataset is filtered out in terms of the specified columns. This code counts for the number of NAs in each column
+#Number of NAs in each column
+NumberofNAs<- joinedDataSet %>% summarize_all(function(x)sum(is.na(x))) 
 
-joinedDataSet %>% summarize_all(function(x)sum(is.na(x))) 
-
-#Filtered out rows that did not have any numbers (only NA. This is because they were not going to be of use for the rest of the project. I also changed the class of the Immigration Variable to integer
+justnumeric <- joinedDataSet %>% select(4:17)
 
 
-                                                   
+justnumeric %>% summarize_all(function(x)mean(x, na.rm = T))
+
+
+NumberofNAs <- NumberofNAs %>% pivot_longer(1:17, names_to="Variables", values_to="Number of NA values")
+NumberofNAs 
+
 #Freqeuncy of Each Categorical Variable
 joinedDataSet %>% group_by(`Country/Region of Destination`) %>% count()
 joinedDataSet %>% group_by(`Country of Origin`) %>% count()
-joinedDataSet %>% group_by(`Year`) %>% summarise(CountOfYears = n())
-
-#Summary Statistic Accounting for Two Categorical Variables
-SSTwoCat<- joinedDataSet %>% group_by(`Country/Region of Destination`, `Year`) %>% summarise_at(2, .funs = list(mean=mean, sd=sd, median=median, min=min, max=max), na.rm = TRUE) %>% pivot_longer(c(3:7), names_to="stat", values_to="Number of People Immigrating Out of the Country")
-
-
-#Summary Statistic Accounting for Country of Origin as a Categorical Variable
-SSOneCat<- joinedDataSet %>% group_by(`Country of Origin`) %>% summarise_at(c(3, 5:16), .funs = list(mean=mean, sd=sd, median=median, min=min, max=max), na.rm = TRUE) %>% pivot_longer(-1) 
-
-SSOneCat<- SSOneCat %>% mutate(`name`=str_replace_all(`name`, "pf_re", "pf re")) %>% mutate(`name`=str_replace_all(`name`, "pf_identity_s", "pf identity s")) %>% mutate(`name`=str_replace_all(`name`, "pf_rol_pro", "pf rol pro")) %>% mutate(`name`=str_replace_all(`name`, "pf_ss_disappearances_d", "pf ss disappearances d")) %>% mutate(`name`=str_replace_all(`name`, "pf_movement_w", "pf movement w")) %>% mutate(`name`=str_replace_all(`name`, "pf_association_ass", "pf association ass"))  %>% mutate(`name`=str_replace_all(`name`, "pf_ex", "pf ex")) %>% mutate(`name`=str_replace_all(`name`, "pf_identity_divorce", "pf identity divorce")) %>% mutate(`name`=str_replace_all(`name`, "hf_score", "hf score")) %>% mutate(`name`=str_replace_all(`name`, "ef_regulation", "ef regulation"))
-SSOneCat <- SSOneCat %>% separate(name, into=c("name","stat"), sep="_") %>% pivot_wider()
+joinedDataSet %>% group_by(`Year`) %>% summarise(Count = n())
 
 #SummaryStatistic Not Accounting for Any Categorical Variable
 SSNumerical<- joinedDataSet %>% summarise_at(c(4, 6:17), .funs = list(mean=mean, sd=sd, median=median, min=min, max=max), na.rm = TRUE) %>% pivot_longer(c(1:65))
@@ -146,6 +157,22 @@ SSNumerical<- SSNumerical %>% mutate(`name`=str_replace_all(`name`, "pf_re", "pf
 SSNumerical <- SSNumerical %>% separate(name, into=c("name","stat"), sep="_") %>% pivot_wider()
 
 
+#Summary Statistic Accounting for Country of Origin as a Categorical Variable
+SSOneCat<- joinedDataSet %>% group_by(`Country of Origin`) %>% summarise_at(c(3, 5:16), .funs = list(mean=mean, sd=sd, median=median, min=min, max=max), na.rm = TRUE) %>% pivot_longer(-1) 
+
+SSOneCat<- SSOneCat %>% mutate(`name`=str_replace_all(`name`, "pf_re", "pf re")) %>% mutate(`name`=str_replace_all(`name`, "pf_identity_s", "pf identity s")) %>% mutate(`name`=str_replace_all(`name`, "pf_rol_pro", "pf rol pro")) %>% mutate(`name`=str_replace_all(`name`, "pf_ss_disappearances_d", "pf ss disappearances d")) %>% mutate(`name`=str_replace_all(`name`, "pf_movement_w", "pf movement w")) %>% mutate(`name`=str_replace_all(`name`, "pf_association_ass", "pf association ass"))  %>% mutate(`name`=str_replace_all(`name`, "pf_ex", "pf ex")) %>% mutate(`name`=str_replace_all(`name`, "pf_identity_divorce", "pf identity divorce")) %>% mutate(`name`=str_replace_all(`name`, "hf_score", "hf score")) %>% mutate(`name`=str_replace_all(`name`, "ef_regulation", "ef regulation"))
+SSOneCat <- SSOneCat %>% separate(name, into=c("name","stat"), sep="_") %>% pivot_wider()
+
+#Creating a Function
+joinedDataSet %>% filter(!is.na(`Number of People Immigrating Out of Country`)) %>% summarise("Sum" = sum(`Number of People Immigrating Out of Country`))
+  
+percentofTotal<- function(x)((x/112908006) * 100)
+
+
+#Summary Statistic Accounting for Two Categorical Variables: Country/Region of Destination and Year
+ 
+SSTwoCat<- joinedDataSet %>% group_by(`Country/Region of Destination`, Year) %>% filter(!is.na(`Number of People Immigrating Out of Country`)) %>% summarise("Number Of People Immigrating Into Country" = sum(`Number of People Immigrating Out of Country`)) %>% mutate("PercentOutofTotalEmigrants" = percentofTotal(`Number Of People Immigrating Into Country`)) 
+
 library(kableExtra)
 #install.packages("gt")
 library(gt)
@@ -153,11 +180,13 @@ library(gt)
 SSNumerical %>% gt
 SSOneCat %>% slice(91:101) %>% gt 
 SSTwoCat %>% head() %>% gt
-#Creating a Function
+
 
 ```
 
-The first step I made sure to do is to turn any blank columns or columns with .. into NA values. After doing that, I selected only the variables of interest and created a new variable that shows the percent change in immigration from and to a country between the years 2015 and 2010. I also found the number of NAs in each column, which varied from 0 to 56086. I also found the frequency of each categorical variable as well (Year is treated as a categorical variable rather than numeric because it does not present value standalone unlike the other numeric variabels). I only selected a few columns out of the many variables I had. The 'hf_score' variable is the total hf_score from the combined UNImmigration dataset rather than my own averaged hf_score. I also created the respective summary tables for each numeric variable, at first, by themselves, and then paired with one, and two categorical variables. I also created my own function to use as one of the statistics in one of my summary tables. 
+Before exploring my data, I made sure to convert and blank observations or observations with .. into NA values. Afterwards, I selected only the variables of interest and created a new variable with the function "mutate" to show the percent change in immigration from and to a country between the years 2015 and 2010. The 'hf_score' variable is the total hf_score from the 'joinedDataSet' rather than my own averaged hf_score. I also found the number of NAs in each column, which varied from 0 to 56086. I also found the frequency of each categorical variable as well (Year is treated as a categorical variable rather than numeric because it does not present value standalone unlike the other numeric variables). 
+
+Respective summary tables were created for each numeric variable, at first, by themselves, and then paired with one, and two categorical variables. I also created my own function to use as one of the statistics in one of my summary tables. 
 
 #### Visualizing
 
@@ -186,7 +215,7 @@ joinedDataSet %>% group_by(`Country of Origin`, Year) %>% filter(!is.na(`Number 
 
 joinedDataSet %>% group_by(`Country of Origin`, Year) %>% filter(!is.na(`Number of People Immigrating Out of Country`) & (!is.na(pf_religion))) %>% summarise("Total Number of People Immigrating Out of Country" = sum(`Number of People Immigrating Out of Country`))  %>% arrange(desc(`Total Number of People Immigrating Out of Country`)) %>% filter(n()>1)
 
-                                                                                                                                      Top5Low5ByNumberOfPeopleLeaving <- joinedDataSet %>% filter(!is.na(`Number of People Immigrating Out of Country`)) %>% filter(`Country of Origin`=="United States"|`Country of Origin`=="United Kingdom"|`Country of Origin`=="Russia"|`Country of Origin`=="India"|`Country of Origin`=="Philippines"|`Country of Origin`=="Botswana"|`Country of Origin`=="Swaziland"|`Country of Origin`=="Timor-Leste"|`Country of Origin`=="Lesotho"|`Country of Origin`=="Pap. New Guinea")  %>% group_by(`Country of Origin`, Year) %>% mutate("Number of People Immigrating Out of Country" = sum(`Number of People Immigrating Out of Country`))                                                                                                                                                                                                                             
+                                                                                                                    Top5Low5ByNumberOfPeopleLeaving <- joinedDataSet %>% filter(!is.na(`Number of People Immigrating Out of Country`)) %>% filter(`Country of Origin`=="United States"|`Country of Origin`=="United Kingdom"|`Country of Origin`=="Russia"|`Country of Origin`=="India"|`Country of Origin`=="Philippines"|`Country of Origin`=="Botswana"|`Country of Origin`=="Swaziland"|`Country of Origin`=="Timor-Leste"|`Country of Origin`=="Lesotho"|`Country of Origin`=="Pap. New Guinea")  %>% group_by(`Country of Origin`, Year) %>% mutate("Number of People Immigrating Out of Country" = sum(`Number of People Immigrating Out of Country`))                                                                                                                                                                                                                             
                                                        
 ggplot(Top5Low5ByNumberOfPeopleLeaving, aes(`Number of People Immigrating Out of Country`, pf_religion))+ geom_point(size=5, aes(color= `Country of Origin`)) + geom_line(alpha = .1) + ggtitle("Relationship between Religious Freedom and Number of People Leaving a Country")+xlab("Number of People Leaving Country")+ylab("Religion Index Score") + facet_grid(rows = vars(Year)) + scale_x_continuous(breaks=seq(0,2500000,250000)) + theme(text = element_text(size=), axis.text.x = element_text(angle=90, hjust=1, size=9))
 
