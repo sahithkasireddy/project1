@@ -23,7 +23,7 @@ tidy=TRUE, tidy.opts=list(width.cutoff=60), R.options=list(max.print=100))
 
 #### Introduction 
 
-My two datasets deal with data related to countries. One dataset, hif, is about the different examples of freedom from political scientists. The other dataset, renamed to UNImmigration, deals with the number of people leaving a country to a different country. I am interested in this dataset because I am really interested in cultures and the social and political systems of countries. 
+My two datasets deal with data related to countries. One dataset, hif, is about the different examples of freedom from political scientists. The other dataset, renamed to UNImmigration, deals with the number of people leaving a country to a different country. I am interested in this dataset because I am really interested in cultures and the social and political systems of countries. The hfi dataset was found from a list of common packaged datasets found in the Project1 Instructions link. The data for the UNImmigration was also found in one of the links but had to be manually repackaged by me in order to become a csv file.
 
 I believe that there will be a positive correlation between the number of people entering a country and a country's overall human freedex index score as well as its individual index scores. Therefore, I would also believe that there would be a negative correlation between the number of people leaving a country and the country's overall human freedom index score as well as its individual index scores. I am also interested in varying data between the top countries of a certain category and the worst countries of a certain category. 
 
@@ -145,8 +145,8 @@ NumberofNAs <- NumberofNAs %>% pivot_longer(1:17, names_to="Variables", values_t
 NumberofNAs 
 
 #Freqeuncy of Each Categorical Variable
-joinedDataSet %>% group_by(`Country/Region of Destination`) %>% count()
-joinedDataSet %>% group_by(`Country of Origin`) %>% count()
+joinedDataSet %>% group_by(`Country/Region of Destination`) %>% summarise(Count = n())
+joinedDataSet %>% group_by(`Country of Origin`) %>% summarise(Count= n())
 joinedDataSet %>% group_by(`Year`) %>% summarise(Count = n())
 
 #SummaryStatistic Not Accounting for Any Categorical Variable
@@ -154,8 +154,7 @@ SSNumerical<- joinedDataSet %>% summarise_at(c(4, 6:17), .funs = list(mean=mean,
 
 SSNumerical<- SSNumerical %>% mutate(`name`=str_replace_all(`name`, "pf_re", "pf re")) %>% mutate(`name`=str_replace_all(`name`, "pf_identity_s", "pf identity s")) %>% mutate(`name`=str_replace_all(`name`, "pf_rol_pro", "pf rol pro")) %>% mutate(`name`=str_replace_all(`name`, "pf_ss_disappearances_d", "pf ss disappearances d")) %>% mutate(`name`=str_replace_all(`name`, "pf_movement_w", "pf movement w")) %>% mutate(`name`=str_replace_all(`name`, "pf_association_ass", "pf association ass"))  %>% mutate(`name`=str_replace_all(`name`, "pf_ex", "pf ex")) %>% mutate(`name`=str_replace_all(`name`, "pf_identity_divorce", "pf identity divorce")) %>% mutate(`name`=str_replace_all(`name`, "hf_score", "hf score")) %>% mutate(`name`=str_replace_all(`name`, "ef_regulation", "ef regulation"))
 
-SSNumerical <- SSNumerical %>% separate(name, into=c("name","stat"), sep="_") %>% pivot_wider()
-
+SSNumerical <- SSNumerical %>% separate(name, into=c("name","stat"), sep="_") %>% pivot_wider() %>% rename("Number of People Immigrating From One Country to Another"=`Number of People Immigrating Out of Country`)
 
 #Summary Statistic Accounting for Country of Origin as a Categorical Variable
 SSOneCat<- joinedDataSet %>% group_by(`Country of Origin`) %>% summarise_at(c(3, 5:16), .funs = list(mean=mean, sd=sd, median=median, min=min, max=max), na.rm = TRUE) %>% pivot_longer(-1) 
@@ -163,15 +162,25 @@ SSOneCat<- joinedDataSet %>% group_by(`Country of Origin`) %>% summarise_at(c(3,
 SSOneCat<- SSOneCat %>% mutate(`name`=str_replace_all(`name`, "pf_re", "pf re")) %>% mutate(`name`=str_replace_all(`name`, "pf_identity_s", "pf identity s")) %>% mutate(`name`=str_replace_all(`name`, "pf_rol_pro", "pf rol pro")) %>% mutate(`name`=str_replace_all(`name`, "pf_ss_disappearances_d", "pf ss disappearances d")) %>% mutate(`name`=str_replace_all(`name`, "pf_movement_w", "pf movement w")) %>% mutate(`name`=str_replace_all(`name`, "pf_association_ass", "pf association ass"))  %>% mutate(`name`=str_replace_all(`name`, "pf_ex", "pf ex")) %>% mutate(`name`=str_replace_all(`name`, "pf_identity_divorce", "pf identity divorce")) %>% mutate(`name`=str_replace_all(`name`, "hf_score", "hf score")) %>% mutate(`name`=str_replace_all(`name`, "ef_regulation", "ef regulation"))
 SSOneCat <- SSOneCat %>% separate(name, into=c("name","stat"), sep="_") %>% pivot_wider()
 
-#Creating a Function
+SSOneCat %>% filter(stat=="max") %>% arrange(desc(`Number of People Immigrating Out of Country`))
+SSOneCat %>% filter(stat=="max") %>% arrange(`Number of People Immigrating Out of Country`)
+SSOneCat %>% filter(stat=="min") %>% arrange(`Number of People Immigrating Out of Country`) %>% filter(`Number of People Immigrating Out of Country`==3) %>% count()
+
+joinedDataSet %>% arrange(desc(`Number of People Immigrating Out of Country`))
+
+
+#Total Number of Immigrants
 joinedDataSet %>% filter(!is.na(`Number of People Immigrating Out of Country`)) %>% summarise("Sum" = sum(`Number of People Immigrating Out of Country`))
   
+#Creating a Function
 percentofTotal<- function(x)((x/112908006) * 100)
 
 
 #Summary Statistic Accounting for Two Categorical Variables: Country/Region of Destination and Year
  
 SSTwoCat<- joinedDataSet %>% group_by(`Country/Region of Destination`, Year) %>% filter(!is.na(`Number of People Immigrating Out of Country`)) %>% summarise("Number Of People Immigrating Into Country" = sum(`Number of People Immigrating Out of Country`)) %>% mutate("PercentOutofTotalEmigrants" = percentofTotal(`Number Of People Immigrating Into Country`)) 
+
+SSTwoCat %>% arrange(desc(PercentOutofTotalEmigrants))
 
 library(kableExtra)
 #install.packages("gt")
@@ -184,29 +193,24 @@ SSTwoCat %>% head() %>% gt
 
 ```
 
-Before exploring my data, I made sure to convert and blank observations or observations with .. into NA values. Afterwards, I selected only the variables of interest and created a new variable with the function "mutate" to show the percent change in immigration from and to a country between the years 2015 and 2010. The 'hf_score' variable is the total hf_score from the 'joinedDataSet' rather than my own averaged hf_score. I also found the number of NAs in each column, which varied from 0 to 56086. I also found the frequency of each categorical variable as well (Year is treated as a categorical variable rather than numeric because it does not present value standalone unlike the other numeric variables). 
+Before exploring my data, I made sure to convert any blank observations or observations with .. into NA values. Afterwards, I selected only the variables of interest and created a new variable with the function "mutate" to show the percent change in immigration from and to a country between the years 2015 and 2010. The 'hf_score' variable is the total hf_score from the 'joinedDataSet' rather than my own averaged hf_score. I also found the number of NAs in each column, which varied from 0 to 56086. I also found the frequency of each level of a categorical variable as well (Year is treated as a categorical variable rather than numeric because it does not present value standalone unlike the other numeric variables). Then, I created my first summary statistic just based off of numerical values. I used many different dpylr functions to create my data. Although it was a little cumbersome, I used the str_replace function to help in preparation for the separate function for two of my tables! For one of the tables, I had used my own function that computed the percentage out of an accumulated total number of emmigrants. 
 
-Respective summary tables were created for each numeric variable, at first, by themselves, and then paired with one, and two categorical variables. I also created my own function to use as one of the statistics in one of my summary tables. 
+Respective summary tables were created for each numeric variable, at first, by themselves, and then paired with one, and two categorical variables. For the first summary table, it was very surprising to find that the standard deviation was much greater than the mean. This meant that some countries are really hot spot destinations for people in some countries while other countries are very rarely visited by people in another country. For the summary table that accounted for country of origin it was interesting to find that the country that had the single highest emigration to another country was Zimbabwe. It was also interesting to find that there were a lot of countries that had a minimum of just 3 people leaving to another country. In fact, there were about 146 times that this had occurred. For the summary statistic table accounting for two categorical variables, I also created my own function to use as one of the statistics in one of my summary tables. This function computes the percent of emigrants out of the total pool of emigrants from both years (not to be confused with immigrants!) This meant that the country with the highest percentage of emigrants out of the total was the United States in 2015. 
 
 #### Visualizing
 
 ```{R}
 library(ggplot2)
 
-densityregulation <- joinedDataSet %>% filter(Year==2015)
-
-mu <- joinedDataSet %>% group_by(region) %>% summarize(grp.mean = mean(ef_regulation))
+mu <- joinedDataSet %>% group_by(region) %>% summarize(grp.mean = mean(ef_regulation, na.rm = T))
 mu
 
-
-ggplot(densityregulation, aes(x=ef_regulation, fill=region)) +geom_density(alpha=.75) + theme(legend.position=c(.3,.5)) +
+ggplot(joinedDataSet, aes(x=ef_regulation, fill=region)) +geom_density(alpha=.75) + theme(legend.position=c(.2,.6)) +
 geom_vline(data = mu, aes(xintercept = grp.mean, color = region), linetype = "dashed") +
-ggtitle("Density Plot of Market Regulation Scores by Region")+xlab("Regulation Scores")+ylab("Density")
-
+ggtitle("Density Plot of Market Regulation Scores by Region")+xlab("Regulation Scores")+ylab("Density") + scale_x_continuous(breaks=seq(0,10,0.5)) + scale_y_continuous(breaks=seq(0,8,1))
 
 ```
-This density plot indicates the regulation scores for the 2015 year for different regions across the world. Furthermore, mean lines were added in order to highlight the mean for the respective regions' mean regulation scores. 
-This density plot shows that the countries that have higher market regulation are the ones that are furthest to the right. These include North America and Western Europe. Furthermore, it is evident that around a regulation score of around 7, there is some overlap between Western Europe, Eastern Europe, East Asia, and Latin America, which highlights that this is a common regulation score for many countries in those regions to be around.
+This density plot indicates the regulation scores for the 2015 year for different regions across the world. Furthermore, mean lines were added in order to highlight the mean for the respective regions' mean regulation scores. The countries that have higher market regulation scores are the ones that are furthest to the right. These include North America and Western Europe. Furthermore, it is evident that around a regulation score of around 7, there is some overlap between Oceania, Eastern Europe, East Asia, and Latin America, which highlights that this is a common regulation score for many countries in those regions to be around. One major outlier is how North America has a very high percentage of countreis that have a high market regulation score. This makes sense however, considering that North America is only composed of Canada and The United States. 
 
 ```{R}
 
@@ -215,17 +219,17 @@ joinedDataSet %>% group_by(`Country of Origin`, Year) %>% filter(!is.na(`Number 
 
 joinedDataSet %>% group_by(`Country of Origin`, Year) %>% filter(!is.na(`Number of People Immigrating Out of Country`) & (!is.na(pf_religion))) %>% summarise("Total Number of People Immigrating Out of Country" = sum(`Number of People Immigrating Out of Country`))  %>% arrange(desc(`Total Number of People Immigrating Out of Country`)) %>% filter(n()>1)
 
-                                                                                                                    Top5Low5ByNumberOfPeopleLeaving <- joinedDataSet %>% filter(!is.na(`Number of People Immigrating Out of Country`)) %>% filter(`Country of Origin`=="United States"|`Country of Origin`=="United Kingdom"|`Country of Origin`=="Russia"|`Country of Origin`=="India"|`Country of Origin`=="Philippines"|`Country of Origin`=="Botswana"|`Country of Origin`=="Swaziland"|`Country of Origin`=="Timor-Leste"|`Country of Origin`=="Lesotho"|`Country of Origin`=="Pap. New Guinea")  %>% group_by(`Country of Origin`, Year) %>% mutate("Number of People Immigrating Out of Country" = sum(`Number of People Immigrating Out of Country`))                                                                                                                                                                                                                             
+                                                                                                                    Top5Low5ByNumberOfPeopleLeaving <- joinedDataSet %>% filter(!is.na(`Number of People Immigrating Out of Country`)) %>% filter(`Country of Origin`=="United States"|`Country of Origin`=="United Kingdom"|`Country of Origin`=="Russia"|`Country of Origin`=="India"|`Country of Origin`=="Philippines"|`Country of Origin`=="Botswana"|`Country of Origin`=="Albania"|`Country of Origin`=="Swaziland"|`Country of Origin`=="Bahamas"|`Country of Origin`=="Pap. New Guinea")  %>% group_by(`Country of Origin`, Year) %>% mutate("Number of People Immigrating Out of Country" = sum(`Number of People Immigrating Out of Country`))                                                                                                                                                                                                                             
                                                        
-ggplot(Top5Low5ByNumberOfPeopleLeaving, aes(`Number of People Immigrating Out of Country`, pf_religion))+ geom_point(size=5, aes(color= `Country of Origin`)) + geom_line(alpha = .1) + ggtitle("Relationship between Religious Freedom and Number of People Leaving a Country")+xlab("Number of People Leaving Country")+ylab("Religion Index Score") + facet_grid(rows = vars(Year)) + scale_x_continuous(breaks=seq(0,2500000,250000)) + theme(text = element_text(size=), axis.text.x = element_text(angle=90, hjust=1, size=9))
+ggplot(Top5Low5ByNumberOfPeopleLeaving, aes(`Number of People Immigrating Out of Country`, pf_religion))+ geom_point(size=5, aes(color= `Country of Origin`)) + geom_line(alpha = .2) + ggtitle("Relationship between Religious Freedom and Number of People Leaving a Country")+xlab("Number of People Leaving Country")+ylab("Religion Index Score") + facet_grid(rows = vars(Year)) + scale_x_continuous(breaks=seq(0,2500000,250000)) + theme(text = element_text(size=10), axis.text.x = element_text(angle=90, hjust=1, size=9))
 
 
 
 ```
 
-Because I knew that I wanted to facet my data, I had to filter my data accordingly. I wanted the top 5 countries with the most immigrants and the top 5 countries with the least immigrants if they did not have missing data for the religious index score for both years (2010 and 2015) I then made a new dataset for this titled 'Top5Low5ByNumberOfPeopleLeaving' by filtering the original dataset with the respective countries.
+Because I knew that I wanted to facet my data, I had to filter my data accordingly. I wanted the top 5 countries with the most immigrants and the top 5 countries with the least immigrants if they did not have missing data for the religious index score for both years (2010 and 2015), which was why the 'filter(n()>1' function was used (because some countries were bypassed because they had data for one year and not the other) I then made a new dataset for this titled 'Top5Low5ByNumberOfPeopleLeaving' by filtering the original dataset with the respective countries.
 
-The overall pattern of the ggplot does not change too much in 5 years, as seen by the consistent shape of both the geom_line as well as the points, which correspond to countries, on the graph. Overall, it seems as if the countries with the highest religious index scores seemed to have both how and low number of immigrants. This was suprising to me because I would have thought that there would only be a postive linear relationship between the number of people leaving a country and a country's religious index. 
+The overall pattern of the ggplot seems to change quite a bit. The top left of the plot is about the same for the number of immigrants leaving per year, althought the religious index score seems to change quite a bit for Pap. New Guiena after about 5 years. For the right half of the plot, most of the countries have around the same number of immigrants leaving for both 2010 and 2015. However, India seems to drop off quiet a bit in its religious index score. Overall, it seems like a conclusion cannot really be made about the relationship between a country's religious freedom and the number of people leaving a country. This is because for countries with around the same religious index scores as other countries can have much less number of immigrants leaving that country. It could possibly be said that relgious freedom and immigrants are independent of another. 
 
 
 ```{R}
@@ -240,13 +244,12 @@ RankedbyHF$`Country/Region of Destination` <- str_replace_all(RankedbyHF$`Countr
 RankedbyHF$`Country/Region of Destination` <- str_replace_all(RankedbyHF$`Country/Region of Destination`, "()", "")
 RankedbyHF$`Country/Region of Destination` <- str_replace_all(RankedbyHF$`Country/Region of Destination`, "Yemen, Rep.", "Yemen")
 
-ggplot(RankedbyHF, aes(x = `Country/Region of Destination`)) + geom_bar(aes(y=`Number of People Immigrating Out of Country`), stat="summary", fun=mean) + ggtitle("Mean Number of People Immigrating to the Top 5 Best and Worst Ranked Countries by Overall Freedom Index")+xlab("Countries")+ylab("Number of People Entering Country") + theme(text = element_text(size=8), axis.text.x = element_text(angle=90, hjust=1, size=7))
-
+ggplot(RankedbyHF, aes(x = `Country/Region of Destination`)) + geom_bar(aes(y=`Number of People Immigrating Out of Country`), stat="summary", fun=mean) + ggtitle("Mean Number of People Immigrating to the Top 5 Best and Worst Ranked Countries by Overall Freedom Index")+xlab("Countries")+ylab("Number of People Entering Country") + theme(text = element_text(size=8), axis.text.x = element_text(angle=90, hjust=1, size=7)) + scale_y_continuous(breaks=seq(0, 15000, 5000))
 ```
 
-I first created a dataset titled RankedbyHF which used code to find the top 5 countries with the highest overall human index score as well as the bottom 5 countries with the lowest overall human index score from the Year 2015. The top 5 countries by overall human index are New Zealand, Hong Kong, Switzerland, Ireland, and Australia in order. The worst 5 countries, starting from the worst score, are Syria, Yemen, Venezuela, Libya, and Egypt. Then, using this dataset, and cleaning up names with str_replace, the ggplot of a bar graph was created. 
+I filtered my data to find the top 5 countries with the highest overall human index score as well as the bottom 5 countries with the lowest overall human index score from the Year 2015. I then made a new dataset for this titled 'RankedbyHF' by filtering the original dataset with the respective countries. Then, using this dataset, and cleaning up names with str_replace, the ggplot of a bar graph was created. 
 
-This bar graph shows that the country with the highest mean number of emigranis is Hong Kong while the country with the lowest mean number of emigrants is Egypt. Ireland and New Zealand are the two countries that despite having high overall Human Index scores seem to have lower emigrants than the countries with the worst overall human index scores, which was a suprise, considering that the other top HF scoring countries had higher emigrants than any low scoring country. 
+This bar graph shows that the country with the highest mean number of emigrants is Hong Kong while the country with the lowest mean number of emigrants is Egypt. Ireland and New Zealand are the two countries that despite having high overall Human Index scores seem to have lower emigrants than the countries with the worst overall human index scores, which was a surprise, considering that the other top HF scoring countries had higher emigrants than any low scoring country. 
 
 
 #### Concluding Remarks
