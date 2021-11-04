@@ -1835,7 +1835,7 @@ comparedf(x = hfi %&gt;% slice(-(1:1458)) %&gt;% select(c(1:3), pf_religion,
 ## ------------------  ------------------  -------
 ## Country of Origin   Country of Origin   class  
 ## Country of Origin   Country of Origin   levels</code></pre>
-<p>After filtering out unneeded regions from both the ‘Country/Region of Destination’ varible and the ‘Country of Origin’ variable in the UNImmigration dataset, Regex (regular expressions) were used to make sure that the common countries between the two datasets were spelled the same. The two unique ID variables in the UNImmigration dataset: ‘Country of Destination’ and “Number of People Immigrating Out of Country”. The unique ID variables in the hfi dataset are numerous. There are 120 unique variables of 122 variables (only ‘Year’ and ‘Country of Origin’ are not unique). Some of the unique ID variables in the ‘hif’ that I will be using are ‘pf_religion, pf_identity_sex, pf_rol_procedural, pf_ss_disappearances_disap, pf_movement_women, pf_association_association, pf_association_assembly, pf_expression, pf_identity_divorce,ef_regulation, and hf_score’</p>
+<p>After filtering out unneeded regions from both the ‘Country/Region of Destination’ varible and the ‘Country of Origin’ variable in the UNImmigration dataset, Regex (regular expressions) were used to make sure that the common countries between the two datasets were spelled the same. The two unique ID variables in the UNImmigration dataset: ‘Country of Destination’ and “Number of People Immigrating Out of Country”. The unique ID variables in the hfi dataset are numerous. There are 120 unique variables of 122 variables (only ‘Year’ and ‘Country of Origin’ are not unique). Some of the unique ID variables in the ‘hif’ that I will be using are ‘pf_religion, pf_identity_sex, pf_rol_procedural, pf_ss_disappearances_disap, pf_movement_women, pf_association_association, pf_association_assembly, pf_expression, pf_identity_divorce,ef_regulation, and hf_score’ (All of this is shown in the summary of the compare data frame code of the datasets, that were very filtered, for simplicity sake).</p>
 <p>An inner join was performed in order to match the data values from the UNImmigration dataset to the hfi dataset. An inner join was performed instead of other types of joins in order to keep data that only matched, , which meant that 309260 observations were dropped, considering that there were 72380 observations in the joinedDataSet. This will not create an issue for my analyssi because I only wanted data that was matched between both sets to make analysis consistent. Additionally, because I will be using variables from both datasets in my graphs, I did not want there to be data accounted for in that graph that did not come from both sets.</p>
 </div>
 <div id="wrangling" class="section level4">
@@ -1862,16 +1862,44 @@ joinedDataSet &lt;- joinedDataSet %&gt;% arrange(`Country of Origin`,
     lag(`Number of People Immigrating Out of Country`))/lag(`Number of People Immigrating Out of Country`))
 
 # Number of NAs in each column
-joinedDataSet %&gt;% summarize_all(function(x) sum(is.na(x)))</code></pre>
-<pre><code>## # A tibble: 1 × 17
-##    Year `Country/Region … `Country of Orig… `Number of Peopl… region pf_religion
-##   &lt;int&gt;             &lt;int&gt;             &lt;int&gt;             &lt;int&gt;  &lt;int&gt;       &lt;int&gt;
-## 1     0                 0                 0             52067      0        1130
-## # … with 11 more variables: pf_identity_sex &lt;int&gt;, pf_rol_procedural &lt;int&gt;,
-## #   pf_ss_disappearances_disap &lt;int&gt;, pf_movement_women &lt;int&gt;,
-## #   pf_association_association &lt;int&gt;, pf_association_assembly &lt;int&gt;,
-## #   pf_expression &lt;int&gt;, pf_identity_divorce &lt;int&gt;, ef_regulation &lt;int&gt;,
-## #   hf_score &lt;int&gt;, ChangeInImmigration &lt;int&gt;</code></pre>
+NumberofNAs &lt;- joinedDataSet %&gt;% summarize_all(function(x) sum(is.na(x)))
+
+justnumeric &lt;- joinedDataSet %&gt;% select(4:17)
+
+
+justnumeric %&gt;% summarize_all(function(x) mean(x, na.rm = T))</code></pre>
+<pre><code>## # A tibble: 1 × 14
+##   `Number of People Immigra… region pf_religion pf_identity_sex pf_rol_procedur…
+##                        &lt;dbl&gt;  &lt;dbl&gt;       &lt;dbl&gt;           &lt;dbl&gt;            &lt;dbl&gt;
+## 1                      5670.     NA        7.82            7.29             5.60
+## # … with 9 more variables: pf_ss_disappearances_disap &lt;dbl&gt;,
+## #   pf_movement_women &lt;dbl&gt;, pf_association_association &lt;dbl&gt;,
+## #   pf_association_assembly &lt;dbl&gt;, pf_expression &lt;dbl&gt;,
+## #   pf_identity_divorce &lt;dbl&gt;, ef_regulation &lt;dbl&gt;, hf_score &lt;dbl&gt;,
+## #   ChangeInImmigration &lt;dbl&gt;</code></pre>
+<pre class="r"><code>NumberofNAs &lt;- NumberofNAs %&gt;% pivot_longer(1:17, names_to = &quot;Variables&quot;, 
+    values_to = &quot;Number of NA values&quot;)
+NumberofNAs</code></pre>
+<pre><code>## # A tibble: 17 × 2
+##    Variables                                   `Number of NA values`
+##    &lt;chr&gt;                                                       &lt;int&gt;
+##  1 Year                                                            0
+##  2 Country/Region of Destination                                   0
+##  3 Country of Origin                                               0
+##  4 Number of People Immigrating Out of Country                 52067
+##  5 region                                                          0
+##  6 pf_religion                                                  1130
+##  7 pf_identity_sex                                               660
+##  8 pf_rol_procedural                                           26275
+##  9 pf_ss_disappearances_disap                                   1130
+## 10 pf_movement_women                                            3950
+## 11 pf_association_association                                  15230
+## 12 pf_association_assembly                                     15230
+## 13 pf_expression                                                 660
+## 14 pf_identity_divorce                                         38730
+## 15 ef_regulation                                                 660
+## 16 hf_score                                                      660
+## 17 ChangeInImmigration                                         58755</code></pre>
 <pre class="r"><code># Freqeuncy of Each Categorical Variable
 joinedDataSet %&gt;% group_by(`Country/Region of Destination`) %&gt;% 
     count()</code></pre>
@@ -1906,17 +1934,33 @@ joinedDataSet %&gt;% group_by(`Country/Region of Destination`) %&gt;%
 ##  9 Bahamas               470
 ## 10 Bahrain               470
 ## # … with 149 more rows</code></pre>
-<pre class="r"><code>joinedDataSet %&gt;% group_by(Year) %&gt;% summarise(CountOfYears = n())</code></pre>
+<pre class="r"><code>joinedDataSet %&gt;% group_by(Year) %&gt;% summarise(Count = n())</code></pre>
 <pre><code>## # A tibble: 2 × 2
-##    Year CountOfYears
-##   &lt;int&gt;        &lt;int&gt;
-## 1  2010        35710
-## 2  2015        36860</code></pre>
-<pre class="r"><code># Summary Statistic Accounting for Two Categorical Variables
-SSTwoCat &lt;- joinedDataSet %&gt;% group_by(`Country/Region of Destination`, 
-    Year) %&gt;% summarise_at(2, .funs = list(mean = mean, sd = sd, 
-    median = median, min = min, max = max), na.rm = TRUE) %&gt;% 
-    pivot_longer(c(3:7), names_to = &quot;stat&quot;, values_to = &quot;Number of People Immigrating Out of the Country&quot;)
+##    Year Count
+##   &lt;int&gt; &lt;int&gt;
+## 1  2010 35710
+## 2  2015 36860</code></pre>
+<pre class="r"><code># SummaryStatistic Not Accounting for Any Categorical
+# Variable
+SSNumerical &lt;- joinedDataSet %&gt;% summarise_at(c(4, 6:17), .funs = list(mean = mean, 
+    sd = sd, median = median, min = min, max = max), na.rm = TRUE) %&gt;% 
+    pivot_longer(c(1:65))
+
+SSNumerical &lt;- SSNumerical %&gt;% mutate(name = str_replace_all(name, 
+    &quot;pf_re&quot;, &quot;pf re&quot;)) %&gt;% mutate(name = str_replace_all(name, 
+    &quot;pf_identity_s&quot;, &quot;pf identity s&quot;)) %&gt;% mutate(name = str_replace_all(name, 
+    &quot;pf_rol_pro&quot;, &quot;pf rol pro&quot;)) %&gt;% mutate(name = str_replace_all(name, 
+    &quot;pf_ss_disappearances_d&quot;, &quot;pf ss disappearances d&quot;)) %&gt;% 
+    mutate(name = str_replace_all(name, &quot;pf_movement_w&quot;, &quot;pf movement w&quot;)) %&gt;% 
+    mutate(name = str_replace_all(name, &quot;pf_association_ass&quot;, 
+        &quot;pf association ass&quot;)) %&gt;% mutate(name = str_replace_all(name, 
+    &quot;pf_ex&quot;, &quot;pf ex&quot;)) %&gt;% mutate(name = str_replace_all(name, 
+    &quot;pf_identity_divorce&quot;, &quot;pf identity divorce&quot;)) %&gt;% mutate(name = str_replace_all(name, 
+    &quot;hf_score&quot;, &quot;hf score&quot;)) %&gt;% mutate(name = str_replace_all(name, 
+    &quot;ef_regulation&quot;, &quot;ef regulation&quot;))
+
+SSNumerical &lt;- SSNumerical %&gt;% separate(name, into = c(&quot;name&quot;, 
+    &quot;stat&quot;), sep = &quot;_&quot;) %&gt;% pivot_wider()
 
 
 # Summary Statistic Accounting for Country of Origin as a
@@ -1941,40 +1985,35 @@ SSOneCat &lt;- SSOneCat %&gt;% mutate(name = str_replace_all(name,
 SSOneCat &lt;- SSOneCat %&gt;% separate(name, into = c(&quot;name&quot;, &quot;stat&quot;), 
     sep = &quot;_&quot;) %&gt;% pivot_wider()
 
-# SummaryStatistic Not Accounting for Any Categorical
-# Variable
-SSNumerical &lt;- joinedDataSet %&gt;% summarise_at(c(4, 6:17), .funs = list(mean = mean, 
-    sd = sd, median = median, min = min, max = max), na.rm = TRUE) %&gt;% 
-    pivot_longer(c(1:65))
+# Creating a Function
+joinedDataSet %&gt;% filter(!is.na(`Number of People Immigrating Out of Country`)) %&gt;% 
+    summarise(Sum = sum(`Number of People Immigrating Out of Country`))</code></pre>
+<pre><code>## # A tibble: 1 × 1
+##         Sum
+##       &lt;int&gt;
+## 1 116255554</code></pre>
+<pre class="r"><code>percentofTotal &lt;- function(x) ((x/112908006) * 100)
 
-SSNumerical &lt;- SSNumerical %&gt;% mutate(name = str_replace_all(name, 
-    &quot;pf_re&quot;, &quot;pf re&quot;)) %&gt;% mutate(name = str_replace_all(name, 
-    &quot;pf_identity_s&quot;, &quot;pf identity s&quot;)) %&gt;% mutate(name = str_replace_all(name, 
-    &quot;pf_rol_pro&quot;, &quot;pf rol pro&quot;)) %&gt;% mutate(name = str_replace_all(name, 
-    &quot;pf_ss_disappearances_d&quot;, &quot;pf ss disappearances d&quot;)) %&gt;% 
-    mutate(name = str_replace_all(name, &quot;pf_movement_w&quot;, &quot;pf movement w&quot;)) %&gt;% 
-    mutate(name = str_replace_all(name, &quot;pf_association_ass&quot;, 
-        &quot;pf association ass&quot;)) %&gt;% mutate(name = str_replace_all(name, 
-    &quot;pf_ex&quot;, &quot;pf ex&quot;)) %&gt;% mutate(name = str_replace_all(name, 
-    &quot;pf_identity_divorce&quot;, &quot;pf identity divorce&quot;)) %&gt;% mutate(name = str_replace_all(name, 
-    &quot;hf_score&quot;, &quot;hf score&quot;)) %&gt;% mutate(name = str_replace_all(name, 
-    &quot;ef_regulation&quot;, &quot;ef regulation&quot;))
 
-SSNumerical &lt;- SSNumerical %&gt;% separate(name, into = c(&quot;name&quot;, 
-    &quot;stat&quot;), sep = &quot;_&quot;) %&gt;% pivot_wider()
+# Summary Statistic Accounting for Two Categorical Variables:
+# Country/Region of Destination and Year
 
+SSTwoCat &lt;- joinedDataSet %&gt;% group_by(`Country/Region of Destination`, 
+    Year) %&gt;% filter(!is.na(`Number of People Immigrating Out of Country`)) %&gt;% 
+    summarise(`Number Of People Immigrating Into Country` = sum(`Number of People Immigrating Out of Country`)) %&gt;% 
+    mutate(PercentOutofTotalEmigrants = percentofTotal(`Number Of People Immigrating Into Country`))
 
 library(kableExtra)
 # install.packages(&#39;gt&#39;)
 library(gt)
 
 SSNumerical %&gt;% gt</code></pre>
-<div id="ddevzqrppv" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<div id="sqyufqseqy" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
 <style>html {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', 'Fira Sans', 'Droid Sans', Arial, sans-serif;
 }
 
-#ddevzqrppv .gt_table {
+#sqyufqseqy .gt_table {
   display: table;
   border-collapse: collapse;
   margin-left: auto;
@@ -1999,7 +2038,7 @@ SSNumerical %&gt;% gt</code></pre>
   border-left-color: #D3D3D3;
 }
 
-#ddevzqrppv .gt_heading {
+#sqyufqseqy .gt_heading {
   background-color: #FFFFFF;
   text-align: center;
   border-bottom-color: #FFFFFF;
@@ -2011,7 +2050,7 @@ SSNumerical %&gt;% gt</code></pre>
   border-right-color: #D3D3D3;
 }
 
-#ddevzqrppv .gt_title {
+#sqyufqseqy .gt_title {
   color: #333333;
   font-size: 125%;
   font-weight: initial;
@@ -2021,7 +2060,7 @@ SSNumerical %&gt;% gt</code></pre>
   border-bottom-width: 0;
 }
 
-#ddevzqrppv .gt_subtitle {
+#sqyufqseqy .gt_subtitle {
   color: #333333;
   font-size: 85%;
   font-weight: initial;
@@ -2031,13 +2070,13 @@ SSNumerical %&gt;% gt</code></pre>
   border-top-width: 0;
 }
 
-#ddevzqrppv .gt_bottom_border {
+#sqyufqseqy .gt_bottom_border {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
 }
 
-#ddevzqrppv .gt_col_headings {
+#sqyufqseqy .gt_col_headings {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -2052,7 +2091,7 @@ SSNumerical %&gt;% gt</code></pre>
   border-right-color: #D3D3D3;
 }
 
-#ddevzqrppv .gt_col_heading {
+#sqyufqseqy .gt_col_heading {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -2072,7 +2111,7 @@ SSNumerical %&gt;% gt</code></pre>
   overflow-x: hidden;
 }
 
-#ddevzqrppv .gt_column_spanner_outer {
+#sqyufqseqy .gt_column_spanner_outer {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -2084,15 +2123,15 @@ SSNumerical %&gt;% gt</code></pre>
   padding-right: 4px;
 }
 
-#ddevzqrppv .gt_column_spanner_outer:first-child {
+#sqyufqseqy .gt_column_spanner_outer:first-child {
   padding-left: 0;
 }
 
-#ddevzqrppv .gt_column_spanner_outer:last-child {
+#sqyufqseqy .gt_column_spanner_outer:last-child {
   padding-right: 0;
 }
 
-#ddevzqrppv .gt_column_spanner {
+#sqyufqseqy .gt_column_spanner {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
@@ -2104,7 +2143,7 @@ SSNumerical %&gt;% gt</code></pre>
   width: 100%;
 }
 
-#ddevzqrppv .gt_group_heading {
+#sqyufqseqy .gt_group_heading {
   padding: 8px;
   color: #333333;
   background-color: #FFFFFF;
@@ -2126,7 +2165,7 @@ SSNumerical %&gt;% gt</code></pre>
   vertical-align: middle;
 }
 
-#ddevzqrppv .gt_empty_group_heading {
+#sqyufqseqy .gt_empty_group_heading {
   padding: 0.5px;
   color: #333333;
   background-color: #FFFFFF;
@@ -2141,15 +2180,15 @@ SSNumerical %&gt;% gt</code></pre>
   vertical-align: middle;
 }
 
-#ddevzqrppv .gt_from_md > :first-child {
+#sqyufqseqy .gt_from_md > :first-child {
   margin-top: 0;
 }
 
-#ddevzqrppv .gt_from_md > :last-child {
+#sqyufqseqy .gt_from_md > :last-child {
   margin-bottom: 0;
 }
 
-#ddevzqrppv .gt_row {
+#sqyufqseqy .gt_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -2168,7 +2207,7 @@ SSNumerical %&gt;% gt</code></pre>
   overflow-x: hidden;
 }
 
-#ddevzqrppv .gt_stub {
+#sqyufqseqy .gt_stub {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -2180,7 +2219,7 @@ SSNumerical %&gt;% gt</code></pre>
   padding-left: 12px;
 }
 
-#ddevzqrppv .gt_summary_row {
+#sqyufqseqy .gt_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -2190,7 +2229,7 @@ SSNumerical %&gt;% gt</code></pre>
   padding-right: 5px;
 }
 
-#ddevzqrppv .gt_first_summary_row {
+#sqyufqseqy .gt_first_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -2200,7 +2239,7 @@ SSNumerical %&gt;% gt</code></pre>
   border-top-color: #D3D3D3;
 }
 
-#ddevzqrppv .gt_grand_summary_row {
+#sqyufqseqy .gt_grand_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -2210,7 +2249,7 @@ SSNumerical %&gt;% gt</code></pre>
   padding-right: 5px;
 }
 
-#ddevzqrppv .gt_first_grand_summary_row {
+#sqyufqseqy .gt_first_grand_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -2220,11 +2259,11 @@ SSNumerical %&gt;% gt</code></pre>
   border-top-color: #D3D3D3;
 }
 
-#ddevzqrppv .gt_striped {
+#sqyufqseqy .gt_striped {
   background-color: rgba(128, 128, 128, 0.05);
 }
 
-#ddevzqrppv .gt_table_body {
+#sqyufqseqy .gt_table_body {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -2233,7 +2272,7 @@ SSNumerical %&gt;% gt</code></pre>
   border-bottom-color: #D3D3D3;
 }
 
-#ddevzqrppv .gt_footnotes {
+#sqyufqseqy .gt_footnotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -2247,13 +2286,13 @@ SSNumerical %&gt;% gt</code></pre>
   border-right-color: #D3D3D3;
 }
 
-#ddevzqrppv .gt_footnote {
+#sqyufqseqy .gt_footnote {
   margin: 0px;
   font-size: 90%;
   padding: 4px;
 }
 
-#ddevzqrppv .gt_sourcenotes {
+#sqyufqseqy .gt_sourcenotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -2267,41 +2306,41 @@ SSNumerical %&gt;% gt</code></pre>
   border-right-color: #D3D3D3;
 }
 
-#ddevzqrppv .gt_sourcenote {
+#sqyufqseqy .gt_sourcenote {
   font-size: 90%;
   padding: 4px;
 }
 
-#ddevzqrppv .gt_left {
+#sqyufqseqy .gt_left {
   text-align: left;
 }
 
-#ddevzqrppv .gt_center {
+#sqyufqseqy .gt_center {
   text-align: center;
 }
 
-#ddevzqrppv .gt_right {
+#sqyufqseqy .gt_right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-#ddevzqrppv .gt_font_normal {
+#sqyufqseqy .gt_font_normal {
   font-weight: normal;
 }
 
-#ddevzqrppv .gt_font_bold {
+#sqyufqseqy .gt_font_bold {
   font-weight: bold;
 }
 
-#ddevzqrppv .gt_font_italic {
+#sqyufqseqy .gt_font_italic {
   font-style: italic;
 }
 
-#ddevzqrppv .gt_super {
+#sqyufqseqy .gt_super {
   font-size: 65%;
 }
 
-#ddevzqrppv .gt_footnote_marks {
+#sqyufqseqy .gt_footnote_marks {
   font-style: italic;
   font-weight: normal;
   font-size: 65%;
@@ -2404,12 +2443,12 @@ SSNumerical %&gt;% gt</code></pre>
 </table>
 </div>
 <pre class="r"><code>SSOneCat %&gt;% slice(91:101) %&gt;% gt</code></pre>
-<div id="twdqjhpqno" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<div id="rcccnzppxs" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
 <style>html {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', 'Fira Sans', 'Droid Sans', Arial, sans-serif;
 }
 
-#twdqjhpqno .gt_table {
+#rcccnzppxs .gt_table {
   display: table;
   border-collapse: collapse;
   margin-left: auto;
@@ -2434,7 +2473,7 @@ SSNumerical %&gt;% gt</code></pre>
   border-left-color: #D3D3D3;
 }
 
-#twdqjhpqno .gt_heading {
+#rcccnzppxs .gt_heading {
   background-color: #FFFFFF;
   text-align: center;
   border-bottom-color: #FFFFFF;
@@ -2446,7 +2485,7 @@ SSNumerical %&gt;% gt</code></pre>
   border-right-color: #D3D3D3;
 }
 
-#twdqjhpqno .gt_title {
+#rcccnzppxs .gt_title {
   color: #333333;
   font-size: 125%;
   font-weight: initial;
@@ -2456,7 +2495,7 @@ SSNumerical %&gt;% gt</code></pre>
   border-bottom-width: 0;
 }
 
-#twdqjhpqno .gt_subtitle {
+#rcccnzppxs .gt_subtitle {
   color: #333333;
   font-size: 85%;
   font-weight: initial;
@@ -2466,13 +2505,13 @@ SSNumerical %&gt;% gt</code></pre>
   border-top-width: 0;
 }
 
-#twdqjhpqno .gt_bottom_border {
+#rcccnzppxs .gt_bottom_border {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
 }
 
-#twdqjhpqno .gt_col_headings {
+#rcccnzppxs .gt_col_headings {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -2487,7 +2526,7 @@ SSNumerical %&gt;% gt</code></pre>
   border-right-color: #D3D3D3;
 }
 
-#twdqjhpqno .gt_col_heading {
+#rcccnzppxs .gt_col_heading {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -2507,7 +2546,7 @@ SSNumerical %&gt;% gt</code></pre>
   overflow-x: hidden;
 }
 
-#twdqjhpqno .gt_column_spanner_outer {
+#rcccnzppxs .gt_column_spanner_outer {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -2519,15 +2558,15 @@ SSNumerical %&gt;% gt</code></pre>
   padding-right: 4px;
 }
 
-#twdqjhpqno .gt_column_spanner_outer:first-child {
+#rcccnzppxs .gt_column_spanner_outer:first-child {
   padding-left: 0;
 }
 
-#twdqjhpqno .gt_column_spanner_outer:last-child {
+#rcccnzppxs .gt_column_spanner_outer:last-child {
   padding-right: 0;
 }
 
-#twdqjhpqno .gt_column_spanner {
+#rcccnzppxs .gt_column_spanner {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
@@ -2539,7 +2578,7 @@ SSNumerical %&gt;% gt</code></pre>
   width: 100%;
 }
 
-#twdqjhpqno .gt_group_heading {
+#rcccnzppxs .gt_group_heading {
   padding: 8px;
   color: #333333;
   background-color: #FFFFFF;
@@ -2561,7 +2600,7 @@ SSNumerical %&gt;% gt</code></pre>
   vertical-align: middle;
 }
 
-#twdqjhpqno .gt_empty_group_heading {
+#rcccnzppxs .gt_empty_group_heading {
   padding: 0.5px;
   color: #333333;
   background-color: #FFFFFF;
@@ -2576,15 +2615,15 @@ SSNumerical %&gt;% gt</code></pre>
   vertical-align: middle;
 }
 
-#twdqjhpqno .gt_from_md > :first-child {
+#rcccnzppxs .gt_from_md > :first-child {
   margin-top: 0;
 }
 
-#twdqjhpqno .gt_from_md > :last-child {
+#rcccnzppxs .gt_from_md > :last-child {
   margin-bottom: 0;
 }
 
-#twdqjhpqno .gt_row {
+#rcccnzppxs .gt_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -2603,7 +2642,7 @@ SSNumerical %&gt;% gt</code></pre>
   overflow-x: hidden;
 }
 
-#twdqjhpqno .gt_stub {
+#rcccnzppxs .gt_stub {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -2615,7 +2654,7 @@ SSNumerical %&gt;% gt</code></pre>
   padding-left: 12px;
 }
 
-#twdqjhpqno .gt_summary_row {
+#rcccnzppxs .gt_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -2625,7 +2664,7 @@ SSNumerical %&gt;% gt</code></pre>
   padding-right: 5px;
 }
 
-#twdqjhpqno .gt_first_summary_row {
+#rcccnzppxs .gt_first_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -2635,7 +2674,7 @@ SSNumerical %&gt;% gt</code></pre>
   border-top-color: #D3D3D3;
 }
 
-#twdqjhpqno .gt_grand_summary_row {
+#rcccnzppxs .gt_grand_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -2645,7 +2684,7 @@ SSNumerical %&gt;% gt</code></pre>
   padding-right: 5px;
 }
 
-#twdqjhpqno .gt_first_grand_summary_row {
+#rcccnzppxs .gt_first_grand_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -2655,11 +2694,11 @@ SSNumerical %&gt;% gt</code></pre>
   border-top-color: #D3D3D3;
 }
 
-#twdqjhpqno .gt_striped {
+#rcccnzppxs .gt_striped {
   background-color: rgba(128, 128, 128, 0.05);
 }
 
-#twdqjhpqno .gt_table_body {
+#rcccnzppxs .gt_table_body {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -2668,7 +2707,7 @@ SSNumerical %&gt;% gt</code></pre>
   border-bottom-color: #D3D3D3;
 }
 
-#twdqjhpqno .gt_footnotes {
+#rcccnzppxs .gt_footnotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -2682,13 +2721,13 @@ SSNumerical %&gt;% gt</code></pre>
   border-right-color: #D3D3D3;
 }
 
-#twdqjhpqno .gt_footnote {
+#rcccnzppxs .gt_footnote {
   margin: 0px;
   font-size: 90%;
   padding: 4px;
 }
 
-#twdqjhpqno .gt_sourcenotes {
+#rcccnzppxs .gt_sourcenotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -2702,41 +2741,41 @@ SSNumerical %&gt;% gt</code></pre>
   border-right-color: #D3D3D3;
 }
 
-#twdqjhpqno .gt_sourcenote {
+#rcccnzppxs .gt_sourcenote {
   font-size: 90%;
   padding: 4px;
 }
 
-#twdqjhpqno .gt_left {
+#rcccnzppxs .gt_left {
   text-align: left;
 }
 
-#twdqjhpqno .gt_center {
+#rcccnzppxs .gt_center {
   text-align: center;
 }
 
-#twdqjhpqno .gt_right {
+#rcccnzppxs .gt_right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-#twdqjhpqno .gt_font_normal {
+#rcccnzppxs .gt_font_normal {
   font-weight: normal;
 }
 
-#twdqjhpqno .gt_font_bold {
+#rcccnzppxs .gt_font_bold {
   font-weight: bold;
 }
 
-#twdqjhpqno .gt_font_italic {
+#rcccnzppxs .gt_font_italic {
   font-style: italic;
 }
 
-#twdqjhpqno .gt_super {
+#rcccnzppxs .gt_super {
   font-size: 65%;
 }
 
-#twdqjhpqno .gt_footnote_marks {
+#rcccnzppxs .gt_footnote_marks {
   font-style: italic;
   font-weight: normal;
   font-size: 65%;
@@ -2935,12 +2974,12 @@ SSNumerical %&gt;% gt</code></pre>
 </table>
 </div>
 <pre class="r"><code>SSTwoCat %&gt;% head() %&gt;% gt</code></pre>
-<div id="qkoegbbgnd" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<div id="dkfjwoorgw" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
 <style>html {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', 'Fira Sans', 'Droid Sans', Arial, sans-serif;
 }
 
-#qkoegbbgnd .gt_table {
+#dkfjwoorgw .gt_table {
   display: table;
   border-collapse: collapse;
   margin-left: auto;
@@ -2965,7 +3004,7 @@ SSNumerical %&gt;% gt</code></pre>
   border-left-color: #D3D3D3;
 }
 
-#qkoegbbgnd .gt_heading {
+#dkfjwoorgw .gt_heading {
   background-color: #FFFFFF;
   text-align: center;
   border-bottom-color: #FFFFFF;
@@ -2977,7 +3016,7 @@ SSNumerical %&gt;% gt</code></pre>
   border-right-color: #D3D3D3;
 }
 
-#qkoegbbgnd .gt_title {
+#dkfjwoorgw .gt_title {
   color: #333333;
   font-size: 125%;
   font-weight: initial;
@@ -2987,7 +3026,7 @@ SSNumerical %&gt;% gt</code></pre>
   border-bottom-width: 0;
 }
 
-#qkoegbbgnd .gt_subtitle {
+#dkfjwoorgw .gt_subtitle {
   color: #333333;
   font-size: 85%;
   font-weight: initial;
@@ -2997,13 +3036,13 @@ SSNumerical %&gt;% gt</code></pre>
   border-top-width: 0;
 }
 
-#qkoegbbgnd .gt_bottom_border {
+#dkfjwoorgw .gt_bottom_border {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
 }
 
-#qkoegbbgnd .gt_col_headings {
+#dkfjwoorgw .gt_col_headings {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -3018,7 +3057,7 @@ SSNumerical %&gt;% gt</code></pre>
   border-right-color: #D3D3D3;
 }
 
-#qkoegbbgnd .gt_col_heading {
+#dkfjwoorgw .gt_col_heading {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -3038,7 +3077,7 @@ SSNumerical %&gt;% gt</code></pre>
   overflow-x: hidden;
 }
 
-#qkoegbbgnd .gt_column_spanner_outer {
+#dkfjwoorgw .gt_column_spanner_outer {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -3050,15 +3089,15 @@ SSNumerical %&gt;% gt</code></pre>
   padding-right: 4px;
 }
 
-#qkoegbbgnd .gt_column_spanner_outer:first-child {
+#dkfjwoorgw .gt_column_spanner_outer:first-child {
   padding-left: 0;
 }
 
-#qkoegbbgnd .gt_column_spanner_outer:last-child {
+#dkfjwoorgw .gt_column_spanner_outer:last-child {
   padding-right: 0;
 }
 
-#qkoegbbgnd .gt_column_spanner {
+#dkfjwoorgw .gt_column_spanner {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
@@ -3070,7 +3109,7 @@ SSNumerical %&gt;% gt</code></pre>
   width: 100%;
 }
 
-#qkoegbbgnd .gt_group_heading {
+#dkfjwoorgw .gt_group_heading {
   padding: 8px;
   color: #333333;
   background-color: #FFFFFF;
@@ -3092,7 +3131,7 @@ SSNumerical %&gt;% gt</code></pre>
   vertical-align: middle;
 }
 
-#qkoegbbgnd .gt_empty_group_heading {
+#dkfjwoorgw .gt_empty_group_heading {
   padding: 0.5px;
   color: #333333;
   background-color: #FFFFFF;
@@ -3107,15 +3146,15 @@ SSNumerical %&gt;% gt</code></pre>
   vertical-align: middle;
 }
 
-#qkoegbbgnd .gt_from_md > :first-child {
+#dkfjwoorgw .gt_from_md > :first-child {
   margin-top: 0;
 }
 
-#qkoegbbgnd .gt_from_md > :last-child {
+#dkfjwoorgw .gt_from_md > :last-child {
   margin-bottom: 0;
 }
 
-#qkoegbbgnd .gt_row {
+#dkfjwoorgw .gt_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -3134,7 +3173,7 @@ SSNumerical %&gt;% gt</code></pre>
   overflow-x: hidden;
 }
 
-#qkoegbbgnd .gt_stub {
+#dkfjwoorgw .gt_stub {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -3146,7 +3185,7 @@ SSNumerical %&gt;% gt</code></pre>
   padding-left: 12px;
 }
 
-#qkoegbbgnd .gt_summary_row {
+#dkfjwoorgw .gt_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -3156,7 +3195,7 @@ SSNumerical %&gt;% gt</code></pre>
   padding-right: 5px;
 }
 
-#qkoegbbgnd .gt_first_summary_row {
+#dkfjwoorgw .gt_first_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -3166,7 +3205,7 @@ SSNumerical %&gt;% gt</code></pre>
   border-top-color: #D3D3D3;
 }
 
-#qkoegbbgnd .gt_grand_summary_row {
+#dkfjwoorgw .gt_grand_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -3176,7 +3215,7 @@ SSNumerical %&gt;% gt</code></pre>
   padding-right: 5px;
 }
 
-#qkoegbbgnd .gt_first_grand_summary_row {
+#dkfjwoorgw .gt_first_grand_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -3186,11 +3225,11 @@ SSNumerical %&gt;% gt</code></pre>
   border-top-color: #D3D3D3;
 }
 
-#qkoegbbgnd .gt_striped {
+#dkfjwoorgw .gt_striped {
   background-color: rgba(128, 128, 128, 0.05);
 }
 
-#qkoegbbgnd .gt_table_body {
+#dkfjwoorgw .gt_table_body {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -3199,7 +3238,7 @@ SSNumerical %&gt;% gt</code></pre>
   border-bottom-color: #D3D3D3;
 }
 
-#qkoegbbgnd .gt_footnotes {
+#dkfjwoorgw .gt_footnotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -3213,13 +3252,13 @@ SSNumerical %&gt;% gt</code></pre>
   border-right-color: #D3D3D3;
 }
 
-#qkoegbbgnd .gt_footnote {
+#dkfjwoorgw .gt_footnote {
   margin: 0px;
   font-size: 90%;
   padding: 4px;
 }
 
-#qkoegbbgnd .gt_sourcenotes {
+#dkfjwoorgw .gt_sourcenotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -3233,41 +3272,41 @@ SSNumerical %&gt;% gt</code></pre>
   border-right-color: #D3D3D3;
 }
 
-#qkoegbbgnd .gt_sourcenote {
+#dkfjwoorgw .gt_sourcenote {
   font-size: 90%;
   padding: 4px;
 }
 
-#qkoegbbgnd .gt_left {
+#dkfjwoorgw .gt_left {
   text-align: left;
 }
 
-#qkoegbbgnd .gt_center {
+#dkfjwoorgw .gt_center {
   text-align: center;
 }
 
-#qkoegbbgnd .gt_right {
+#dkfjwoorgw .gt_right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-#qkoegbbgnd .gt_font_normal {
+#dkfjwoorgw .gt_font_normal {
   font-weight: normal;
 }
 
-#qkoegbbgnd .gt_font_bold {
+#dkfjwoorgw .gt_font_bold {
   font-weight: bold;
 }
 
-#qkoegbbgnd .gt_font_italic {
+#dkfjwoorgw .gt_font_italic {
   font-style: italic;
 }
 
-#qkoegbbgnd .gt_super {
+#dkfjwoorgw .gt_super {
   font-size: 65%;
 }
 
-#qkoegbbgnd .gt_footnote_marks {
+#dkfjwoorgw .gt_footnote_marks {
   font-style: italic;
   font-weight: normal;
   font-size: 65%;
@@ -3278,8 +3317,8 @@ SSNumerical %&gt;% gt</code></pre>
   <thead class="gt_col_headings">
     <tr>
       <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1">Year</th>
-      <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="1" colspan="1">stat</th>
-      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1">Number of People Immigrating Out of the Country</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1">Number Of People Immigrating Into Country</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1">PercentOutofTotalEmigrants</th>
     </tr>
   </thead>
   <tbody class="gt_table_body">
@@ -3287,30 +3326,36 @@ SSNumerical %&gt;% gt</code></pre>
       <td colspan="3" class="gt_group_heading">Afghanistan</td>
     </tr>
     <tr><td class="gt_row gt_right">2010</td>
-<td class="gt_row gt_left">mean</td>
-<td class="gt_row gt_right">29105.000</td></tr>
-    <tr><td class="gt_row gt_right">2010</td>
-<td class="gt_row gt_left">sd</td>
-<td class="gt_row gt_right">4418.003</td></tr>
-    <tr><td class="gt_row gt_right">2010</td>
-<td class="gt_row gt_left">median</td>
-<td class="gt_row gt_right">29105.000</td></tr>
-    <tr><td class="gt_row gt_right">2010</td>
-<td class="gt_row gt_left">min</td>
-<td class="gt_row gt_right">25981.000</td></tr>
-    <tr><td class="gt_row gt_right">2010</td>
-<td class="gt_row gt_left">max</td>
-<td class="gt_row gt_right">32229.000</td></tr>
+<td class="gt_row gt_right">58210</td>
+<td class="gt_row gt_right">0.05155525</td></tr>
     <tr><td class="gt_row gt_right">2015</td>
-<td class="gt_row gt_left">mean</td>
-<td class="gt_row gt_right">29076.000</td></tr>
+<td class="gt_row gt_right">58152</td>
+<td class="gt_row gt_right">0.05150388</td></tr>
+    <tr class="gt_group_heading_row">
+      <td colspan="3" class="gt_group_heading">Albania</td>
+    </tr>
+    <tr><td class="gt_row gt_right">2010</td>
+<td class="gt_row gt_right">66800</td>
+<td class="gt_row gt_right">0.05916321</td></tr>
+    <tr><td class="gt_row gt_right">2015</td>
+<td class="gt_row gt_right">66402</td>
+<td class="gt_row gt_right">0.05881071</td></tr>
+    <tr class="gt_group_heading_row">
+      <td colspan="3" class="gt_group_heading">Algeria</td>
+    </tr>
+    <tr><td class="gt_row gt_right">2010</td>
+<td class="gt_row gt_right">90675</td>
+<td class="gt_row gt_right">0.08030874</td></tr>
+    <tr><td class="gt_row gt_right">2015</td>
+<td class="gt_row gt_right">91933</td>
+<td class="gt_row gt_right">0.08142292</td></tr>
   </tbody>
   
   
 </table>
 </div>
-<pre class="r"><code># Creating a Function</code></pre>
-<p>The first step I made sure to do is to turn any blank columns or columns with .. into NA values. After doing that, I selected only the variables of interest and created a new variable that shows the percent change in immigration from and to a country between the years 2015 and 2010. I also found the number of NAs in each column, which varied from 0 to 56086. I also found the frequency of each categorical variable as well (Year is treated as a categorical variable rather than numeric because it does not present value standalone unlike the other numeric variabels). I only selected a few columns out of the many variables I had. The ‘hf_score’ variable is the total hf_score from the combined UNImmigration dataset rather than my own averaged hf_score. I also created the respective summary tables for each numeric variable, at first, by themselves, and then paired with one, and two categorical variables. I also created my own function to use as one of the statistics in one of my summary tables.</p>
+<p>Before exploring my data, I made sure to convert and blank observations or observations with .. into NA values. Afterwards, I selected only the variables of interest and created a new variable with the function “mutate” to show the percent change in immigration from and to a country between the years 2015 and 2010. The ‘hf_score’ variable is the total hf_score from the ‘joinedDataSet’ rather than my own averaged hf_score. I also found the number of NAs in each column, which varied from 0 to 56086. I also found the frequency of each categorical variable as well (Year is treated as a categorical variable rather than numeric because it does not present value standalone unlike the other numeric variables).</p>
+<p>Respective summary tables were created for each numeric variable, at first, by themselves, and then paired with one, and two categorical variables. I also created my own function to use as one of the statistics in one of my summary tables.</p>
 </div>
 <div id="visualizing" class="section level4">
 <h4>Visualizing</h4>
